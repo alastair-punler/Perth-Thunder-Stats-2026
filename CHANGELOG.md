@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to the spirit of [Semantic Versioning](https://semver.org/spec/v2.0.0.html) as best it can without a proper API.
 
+## [2.4.3] - 2025-12-19
+
+### Fixed
+
+-   Fix csv row processing to checke for `shot-type` id rather than hard-coded `Type` column name.
+
 ## [2.4.2] - 2025-10-07
 
 ### Fixed

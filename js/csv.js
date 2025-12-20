@@ -187,7 +187,7 @@ function processCSV(uploadId, row, swapTeamColor) {
     let id = uuidv4();
 
     let specialData = {
-        typeIndex: getTypeIndex(row.Type),
+        typeIndex: getTypeIndex(row[getDetailTitle("#shot-type")]),
         teamColor: teamColor,
         coords: [
             parseFloat(row.X) + cfgSportA.width / 2,
