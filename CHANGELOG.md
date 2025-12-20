@@ -318,6 +318,7 @@ and this project adheres to the spirit of [Semantic Versioning](https://semver.o
 -   Ability to click on rink to create dot and add row to table with the current details.
 -   Ability to download and upload table.
 
+[2.4.3]: https://github.com/nguyenank/shot-plotter/releases/tag/v2.4.3
 [2.4.2]: https://github.com/nguyenank/shot-plotter/releases/tag/v2.4.2
 [2.4.1]: https://github.com/nguyenank/shot-plotter/releases/tag/v2.4.1
 [2.4.0]: https://github.com/nguyenank/shot-plotter/releases/tag/v2.4.0
