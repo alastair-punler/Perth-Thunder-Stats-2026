@@ -11,7 +11,7 @@ and this project adheres to the spirit of [Semantic Versioning](https://semver.o
 
 ### Fixed
 
--   Fix csv row processing to checke for `shot-type` id rather than hard-coded `Type` column name.
+-   Fix csv row processing to check for `shot-type` id rather than hard-coded `Type` column name.
 
 ## [2.4.2] - 2025-10-07
 
