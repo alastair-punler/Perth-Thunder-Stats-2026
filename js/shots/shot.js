@@ -19,6 +19,76 @@ import {
     cfgSportGoalCoords,
     perimeterId,
 } from "../../setup.js";
+import { getRosterSelection, triggerRecord } from "../roster/roster-state.js";
+
+function autoSelectTeam(svgX) {
+    if (d3.select('input[name="team-bool"]').empty()) return;
+    const isRightSide = svgX > cfgSportA.width / 2;
+    const period = d3.select('input[name="period"]:checked').empty()
+        ? "1"
+        : d3.select('input[name="period"]:checked').property("value");
+    const homeShootsRight = period !== "2";
+    const isHomeTeam = homeShootsRight ? isRightSide : !isRightSide;
+    d3.select(isHomeTeam ? "#blue-team-select" : "#orange-team-select")
+        .property("checked", true);
+}
+
+function updateRinkLabels() {
+    if (d3.select("#rink-label-left").empty()) return;
+    const period = d3.select('input[name="period"]:checked').empty()
+        ? "1"
+        : d3.select('input[name="period"]:checked').property("value");
+    const homeShootsRight = period !== "2";
+    const homeName = d3.select("#blue-team-name").property("value") || "Home";
+    const awayName = d3.select("#orange-team-name").property("value") || "Away";
+
+    d3.select("#rink-label-left")
+        .text(homeShootsRight ? awayName : homeName)
+        .attr("fill", homeShootsRight ? "#ea8e48" : "#35aba9");
+    d3.select("#rink-label-right")
+        .text(homeShootsRight ? homeName : awayName)
+        .attr("fill", homeShootsRight ? "#35aba9" : "#ea8e48");
+}
+
+function setUpRinkLabels() {
+    const w = parseFloat(cfgSportA.width);
+    const h = parseFloat(cfgSportA.height);
+    const fontSize = h * 0.09;
+    // Insert inside #transformations (which carries the scale transform) so
+    // labels use rink coordinate units and resize with the window.
+    // Insert before #dots so dots render on top of the labels.
+    const g = d3.select("#transformations");
+
+    g.insert("text", "#dots")
+        .attr("id", "rink-label-left")
+        .attr("x", w * 0.25)
+        .attr("y", h * 0.13)
+        .attr("text-anchor", "middle")
+        .attr("font-size", fontSize)
+        .attr("font-family", "Open Sans, sans-serif")
+        .attr("font-weight", "600")
+        .attr("pointer-events", "none");
+
+    g.insert("text", "#dots")
+        .attr("id", "rink-label-right")
+        .attr("x", w * 0.75)
+        .attr("y", h * 0.13)
+        .attr("text-anchor", "middle")
+        .attr("font-size", fontSize)
+        .attr("font-family", "Open Sans, sans-serif")
+        .attr("font-weight", "600")
+        .attr("pointer-events", "none");
+
+    updateRinkLabels();
+
+    d3.select("#details").on("change.rinkLabels", (e) => {
+        if (e.target.name === "period") updateRinkLabels();
+    });
+    d3.select("#details").on("input.rinkLabels", (e) => {
+        if (e.target.id === "blue-team-name" || e.target.id === "orange-team-name")
+            updateRinkLabels();
+    });
+}
 
 function setUpShots() {
     // http://thenewcode.com/1068/Making-Arrows-in-SVG
@@ -42,6 +112,11 @@ function setUpShots() {
         .on("click", (e) => {
             document.getSelection().removeAllRanges();
             d3.select("#ghost").selectAll("*").remove();
+            if (getRosterSelection()) {
+                triggerRecord(d3.pointer(e));
+                return;
+            }
+            autoSelectTeam(d3.pointer(e)[0]);
             let shiftHeld = dataStorage.get("shiftHeld");
             let firstPoint = dataStorage.get("firstPoint");
             if (shiftHeld && firstPoint === null) {
@@ -79,6 +154,8 @@ function setUpShots() {
             createShotFromData(r.id, r.rowData, r.specialData, false);
         });
     }
+
+    setUpRinkLabels();
 }
 
 function createShotFromEvent(e, point1) {
@@ -249,14 +326,14 @@ function createShotFromData(id, rowData, specialData, newRow = true) {
         updateTableFooter();
     }
     if (filterRows([formattedRow]).length == 1) {
-        createDot("#normal", id, specialData, "visible");
+        if (!specialData.isStatRow) createDot("#normal", id, specialData, "visible");
         if (newRow) {
             addFilteredRow(formattedRow);
             createNewRow(id, rowData, specialData);
         }
         heatMap();
     } else {
-        createDot("#normal", id, specialData, "hidden");
+        if (!specialData.isStatRow) createDot("#normal", id, specialData, "hidden");
         if (addRow) {
             setNumRows(getNumRows() + 1);
             updateTableFooter();
@@ -264,4 +341,4 @@ function createShotFromData(id, rowData, specialData, newRow = true) {
     }
 }
 
-export { setUpShots, createShotFromData };
+export { setUpShots, createShotFromData, updateRinkLabels };

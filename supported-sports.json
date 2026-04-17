@@ -51,20 +51,12 @@
                     "checked": "blue-team-select"
                 },
                 {
-                    "type": "player",
-                    "title": "Player",
-                    "id": "player-input",
-                    "defaultValue": ""
-                },
-                {
                     "type": "shot-type",
                     "title": "Type",
                     "id": "shot-type",
                     "options": [
                         { "value": "Shot", "selected": true },
-                        { "value": "Goal" },
-                        { "value": "Block" },
-                        { "value": "Miss" }
+                        { "value": "Goal" }
                     ]
                 },
                 { "type": "x", "title": "X", "id": "x", "noWidget": true },
@@ -191,20 +183,12 @@
                     "checked": "blue-team-select"
                 },
                 {
-                    "type": "player",
-                    "title": "Player",
-                    "id": "player-input",
-                    "defaultValue": ""
-                },
-                {
                     "type": "shot-type",
                     "title": "Type",
                     "id": "shot-type",
                     "options": [
                         { "value": "Shot", "selected": true },
-                        { "value": "Goal" },
-                        { "value": "Block" },
-                        { "value": "Miss" }
+                        { "value": "Goal" }
                     ]
                 },
                 { "type": "x", "title": "X", "id": "x", "noWidget": true },
@@ -262,20 +246,12 @@
                     "checked": "blue-team-select"
                 },
                 {
-                    "type": "player",
-                    "title": "Player",
-                    "id": "player-input",
-                    "defaultValue": ""
-                },
-                {
                     "type": "shot-type",
                     "title": "Type",
                     "id": "shot-type",
                     "options": [
                         { "value": "Shot", "selected": true },
-                        { "value": "Goal" },
-                        { "value": "Block" },
-                        { "value": "Miss" }
+                        { "value": "Goal" }
                     ]
                 },
                 { "type": "x", "title": "X", "id": "x", "noWidget": true },
@@ -332,20 +308,12 @@
                     "checked": "blue-team-select"
                 },
                 {
-                    "type": "player",
-                    "title": "Player",
-                    "id": "player-input",
-                    "defaultValue": ""
-                },
-                {
                     "type": "shot-type",
                     "title": "Type",
                     "id": "shot-type",
                     "options": [
                         { "value": "Shot", "selected": true },
-                        { "value": "Goal" },
-                        { "value": "Block" },
-                        { "value": "Miss" }
+                        { "value": "Goal" }
                     ]
                 },
                 { "type": "x", "title": "X", "id": "x", "noWidget": true },
@@ -1394,20 +1362,12 @@
                     "checked": "blue-team-select"
                 },
                 {
-                    "type": "player",
-                    "title": "Player",
-                    "id": "player-input",
-                    "defaultValue": ""
-                },
-                {
                     "type": "shot-type",
                     "title": "Type",
                     "id": "shot-type",
                     "options": [
                         { "value": "Shot", "selected": true },
-                        { "value": "Goal" },
-                        { "value": "Block" },
-                        { "value": "Miss" }
+                        { "value": "Goal" }
                     ]
                 },
                 { "type": "x", "title": "X", "id": "x", "noWidget": true },
@@ -1467,20 +1427,12 @@
                     "checked": "blue-team-select"
                 },
                 {
-                    "type": "player",
-                    "title": "Player",
-                    "id": "player-input",
-                    "defaultValue": ""
-                },
-                {
                     "type": "shot-type",
                     "title": "Type",
                     "id": "shot-type",
                     "options": [
                         { "value": "Shot", "selected": true },
-                        { "value": "Goal" },
-                        { "value": "Block" },
-                        { "value": "Miss" }
+                        { "value": "Goal" }
                     ]
                 },
                 { "type": "x", "title": "X", "id": "x", "noWidget": true },
@@ -1815,20 +1767,12 @@
                     "checked": "blue-team-select"
                 },
                 {
-                    "type": "player",
-                    "title": "Player",
-                    "id": "player-input",
-                    "defaultValue": ""
-                },
-                {
                     "type": "shot-type",
                     "title": "Type",
                     "id": "shot-type",
                     "options": [
                         { "value": "Shot", "selected": true },
-                        { "value": "Goal" },
-                        { "value": "Block" },
-                        { "value": "Miss" }
+                        { "value": "Goal" }
                     ]
                 },
                 { "type": "x", "title": "X", "id": "x", "noWidget": true },
@@ -1953,20 +1897,12 @@
                     "checked": "blue-team-select"
                 },
                 {
-                    "type": "player",
-                    "title": "Player",
-                    "id": "player-input",
-                    "defaultValue": ""
-                },
-                {
                     "type": "shot-type",
                     "title": "Type",
                     "id": "shot-type",
                     "options": [
                         { "value": "Shot", "selected": true },
-                        { "value": "Goal" },
-                        { "value": "Block" },
-                        { "value": "Miss" }
+                        { "value": "Goal" }
                     ]
                 },
                 { "type": "x", "title": "X", "id": "x", "noWidget": true },
@@ -2025,20 +1961,12 @@
                     "checked": "blue-team-select"
                 },
                 {
-                    "type": "player",
-                    "title": "Player",
-                    "id": "player-input",
-                    "defaultValue": ""
-                },
-                {
                     "type": "shot-type",
                     "title": "Type",
                     "id": "shot-type",
                     "options": [
                         { "value": "Shot", "selected": true },
-                        { "value": "Goal" },
-                        { "value": "Block" },
-                        { "value": "Miss" }
+                        { "value": "Goal" }
                     ]
                 },
                 { "type": "x", "title": "X", "id": "x", "noWidget": true },
@@ -2378,20 +2306,12 @@
                     "checked": "blue-team-select"
                 },
                 {
-                    "type": "player",
-                    "title": "Player",
-                    "id": "player-input",
-                    "defaultValue": ""
-                },
-                {
                     "type": "shot-type",
                     "title": "Type",
                     "id": "shot-type",
                     "options": [
                         { "value": "Shot", "selected": true },
-                        { "value": "Goal" },
-                        { "value": "Block" },
-                        { "value": "Miss" }
+                        { "value": "Goal" }
                     ]
                 },
                 { "type": "x", "title": "X", "id": "x", "noWidget": true },
