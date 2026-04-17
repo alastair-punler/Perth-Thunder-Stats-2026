@@ -4,14 +4,15 @@ import { getNumRows, getHeaderRow } from "../table/table-functions.js";
 import { polygon } from "../shots/dot.js";
 import { cfgAppearance } from "../config-appearance.js";
 import {
-    setRecordCallback,
+    setRecordCallback, setDeleteStatCallback,
     setSelectedPlayer, getSelectedPlayer,
     setSelectedStat, getSelectedStat,
 } from "./roster-state.js";
+import { deleteHandler } from "../table/row.js";
 
 const DEFAULT_PLAYERS = [
     { number: "2",  name: "Tyler Colev" },
-    { number: "3",  name: "Robert Haselhurs" },
+    { number: "3",  name: "Robert Haselhurst" },
     { number: "6",  name: "Patrick Sucher" },
     { number: "8",  name: "David Kudla" },
     { number: "11", name: "Yu Hikosaka" },
@@ -24,7 +25,7 @@ const DEFAULT_PLAYERS = [
     { number: "25", name: "Alastair Punler" },
     { number: "27", name: "James Woodman" },
     { number: "28", name: "Drew Robson" },
-    { number: "32", name: "Jacob Ruck" },
+    { number: "32", name: "Jakob Ruck" },
     { number: "36", name: "Benjamin Breault" },
     { number: "71", name: "Peter Hrehorcak" },
     { number: "81", name: "Kolby Johnson" },
@@ -47,12 +48,47 @@ function savePlayers(p)     { dataStorage.set(rosterKey(),  p); }
 function getEvents()        { return dataStorage.get(eventsKey())  || []; }
 function saveEvents(e)      { dataStorage.set(eventsKey(), e); }
 
+// Shared cleanup: decrement stat, remove storage entry, remove SVG marker, re-render.
+// Does NOT touch the table row — that's handled by deleteHandler in row.js.
+function decrementStat(player, statKey) {
+    const events = getEvents();
+    // Find the most recent event for this player + stat
+    const last = [...events].reverse().find(e => e.playerId === player.id && e.stat === statKey);
+    if (!last) return;
+    cleanupStatEvent(last.id);
+    deleteHandler(last.id);
+}
+
+function cleanupStatEvent(eventId) {
+    const events = getEvents();
+    const ev = events.find(e => e.id === eventId);
+    if (!ev) return;
+
+    const players = getPlayers();
+    const player  = players.find(p => p.id === ev.playerId);
+    if (player) {
+        player.stats[ev.stat] = Math.max(0, player.stats[ev.stat] - 1);
+        savePlayers(players);
+    }
+
+    saveEvents(events.filter(e => e.id !== eventId));
+    d3.select(`#pe-${eventId}`).remove();
+    renderRoster();
+}
+
+// Called when the ice marker is clicked — cleans up roster AND table row.
+function deleteStatEvent(eventId) {
+    cleanupStatEvent(eventId);
+    deleteHandler(eventId);
+}
+
 function drawMarker(event, player) {
     const stat = STATS.find(s => s.key === event.stat);
     const r  = parseFloat(cfgSportA.circleR) * 0.9;
     const sw = parseFloat(cfgSportA.strokeWidth || "0.5") * 0.6;
     const [cx, cy] = event.coords;
-    const g = d3.select("#player-events").append("g").attr("id", `pe-${event.id}`);
+    const g = d3.select("#player-events").append("g")
+        .attr("id", `pe-${event.id}`);
 
     if (stat.sides) {
         g.append("polygon")
@@ -102,7 +138,7 @@ function buildStatRowData(player, statKey, svgCoords) {
                 break;
             case "team":  rowData[col.id] = homeName; break;
             case "shot-type":
-            case "dropdown": rowData[col.id] = col.id === "shot-type" ? label : ""; break;
+            case "dropdown": rowData[col.id] = col.id === "shot-type" ? `#${player.number} — ${label}` : ""; break;
             case "x":
                 rowData[col.id] = col.id === "x"
                     ? (svgCoords[0] - parseFloat(cfgSportA.width)  / 2).toFixed(2) : "";
@@ -238,29 +274,6 @@ function renderRoster() {
         .attr("class", "roster-mode" + (selPlayer && selStat ? " roster-mode-ready" : ""))
         .text(modeText);
 
-    // Add-player form
-    const form = panel.append("div").attr("class", "add-player-form");
-    form.append("input").attr("type", "text").attr("id", "new-player-number")
-        .attr("placeholder", "#").attr("class", "roster-input roster-input-num");
-    form.append("input").attr("type", "text").attr("id", "new-player-name")
-        .attr("placeholder", "Player name").attr("class", "roster-input roster-input-name");
-    form.append("button").attr("class", "grey-btn").text("Add Player").on("click", addPlayer);
-
-    // CSV upload / template download
-    const csvRow = panel.append("div").attr("class", "roster-csv-row");
-    csvRow.append("button").attr("class", "grey-btn roster-csv-btn")
-        .text("⬇ Download CSV Template")
-        .on("click", downloadTemplate);
-
-    const uploadLabel = csvRow.append("label").attr("class", "grey-btn roster-csv-btn roster-upload-label");
-    uploadLabel.append("span").text("⬆ Upload Roster CSV");
-    uploadLabel.append("input")
-        .attr("type", "file").attr("accept", ".csv").attr("hidden", true)
-        .on("change", function() {
-            if (this.files[0]) uploadRosterCSV(this.files[0]);
-            this.value = "";
-        });
-
     if (players.length === 0) return;
 
     // Table
@@ -302,7 +315,18 @@ function renderRoster() {
             .on("click", () => selectPlayer(player));
 
         STATS.forEach(stat => {
-            row.append("td").attr("class", "roster-col-num").text(player.stats[stat.key]);
+            const count = player.stats[stat.key];
+            const cell  = row.append("td").attr("class", "roster-col-stat");
+            cell.append("span").text(count);
+            if (count > 0) {
+                cell.append("button")
+                    .attr("class", "grey-btn roster-minus-btn")
+                    .text("−")
+                    .on("click", e => {
+                        e.stopPropagation();
+                        decrementStat(player, stat.key);
+                    });
+            }
         });
 
         row.append("td").attr("class", "roster-col-num").text(foPercent);
@@ -310,6 +334,29 @@ function renderRoster() {
             .append("button").attr("class", "grey-btn roster-del-btn").text("×")
             .on("click", e => { e.stopPropagation(); removePlayer(player.id); });
     });
+
+    // Add-player form
+    const form = panel.append("div").attr("class", "add-player-form");
+    form.append("input").attr("type", "text").attr("id", "new-player-number")
+        .attr("placeholder", "#").attr("class", "roster-input roster-input-num");
+    form.append("input").attr("type", "text").attr("id", "new-player-name")
+        .attr("placeholder", "Player name").attr("class", "roster-input roster-input-name");
+    form.append("button").attr("class", "grey-btn").text("Add Player").on("click", addPlayer);
+
+    // CSV upload / template download
+    const csvRow = panel.append("div").attr("class", "roster-csv-row");
+    csvRow.append("button").attr("class", "grey-btn roster-csv-btn")
+        .text("⬇ Download CSV Template")
+        .on("click", downloadTemplate);
+
+    const uploadLabel = csvRow.append("label").attr("class", "grey-btn roster-csv-btn roster-upload-label");
+    uploadLabel.append("span").text("⬆ Upload Roster CSV");
+    uploadLabel.append("input")
+        .attr("type", "file").attr("accept", ".csv").attr("hidden", true)
+        .on("change", function() {
+            if (this.files[0]) uploadRosterCSV(this.files[0]);
+            this.value = "";
+        });
 }
 
 function renderRosterLegend() {
@@ -347,6 +394,7 @@ function renderRosterLegend() {
 export function setUpRoster() {
     d3.select("#transformations").insert("g", "#dots").attr("id", "player-events");
     setRecordCallback(recordStat);
+    setDeleteStatCallback(cleanupStatEvent);
 
     // Roster stat legend row
     d3.select("#legend").append("div").attr("class", "center")

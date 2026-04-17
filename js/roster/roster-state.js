@@ -1,8 +1,11 @@
 let _selectedPlayer = null;
 let _selectedStat = null;
 let _recordCallback = null;
+let _deleteStatCallback = null;
 
 export function setRecordCallback(fn) { _recordCallback = fn; }
+export function setDeleteStatCallback(fn) { _deleteStatCallback = fn; }
+export function triggerDeleteStat(eventId) { if (_deleteStatCallback) _deleteStatCallback(eventId); }
 
 export function setSelectedPlayer(p) { _selectedPlayer = p; }
 export function getSelectedPlayer() { return _selectedPlayer; }

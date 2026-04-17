@@ -1,5 +1,5 @@
 FROM nginx:alpine
-
+ENV PORT=8080
 # Remove default config (we supply our own on the correct PORT)
 RUN rm /etc/nginx/conf.d/default.conf
 

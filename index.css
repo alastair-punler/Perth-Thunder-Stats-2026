@@ -555,14 +555,33 @@ input[type="text"].roster-input-name { width: auto; flex: 1 1 auto; }
   background-color: #dce8ff !important;
   font-weight: 600; }
 
-.roster-col-num { width: 4rem; }
-.roster-col-del { width: 2rem; }
+.roster-col-num  { width: 4rem; }
+.roster-col-stat {
+  width: 5rem;
+  text-align: center;
+  position: relative; }
+.roster-col-del  { width: 2rem; }
 
 .roster-del-btn {
   font-size: 0.8rem;
   padding: 0.1rem 0.4rem;
   line-height: 1;
   border: 1px solid #aaa; }
+
+.roster-minus-btn {
+  font-size: 0.75rem;
+  padding: 0 0.35rem;
+  line-height: 1.2;
+  border: 1px solid #aaa;
+  position: absolute;
+  right: 0.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.15s; }
+
+.roster-row:hover .roster-minus-btn {
+  opacity: 1; }
 
 @media (max-width: 768px) {
   .main {
