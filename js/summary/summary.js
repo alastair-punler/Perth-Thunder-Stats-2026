@@ -5,19 +5,35 @@ import { getRows } from "../table/table-functions.js";
 // ─── Module state ─────────────────────────────────────────────────────────────
 
 let activePeriod = "All";
-const activeTypes = new Set(["shots"]); // "shots" | "hits" | "turnovers"
+const activeTypes = new Set(["shots"]);
 
-// ─── Public entry point ───────────────────────────────────────────────────────
+// ─── Faceoff dot positions ────────────────────────────────────────────────────
+// Positions in rink-space units, keyed by rink width.
+// These match the SVG element positions in the embedded rink HTML.
 
-export function setUpSummary() {
-    const btn = document.getElementById("summary-tab");
-    if (!btn) return;
-    btn.addEventListener("shown.bs.tab", () => renderSummary());
+function getFaceoffDots(W) {
+    if (W <= 61) {
+        // IIHF 60×30 m — from transform="translate(x,y)" attributes in ice-hockey-iihf.html
+        return [
+            { x: 30, y: 15  },              // center ice
+            { x: 24, y:  8  }, { x: 36, y:  8  },  // neutral zone top
+            { x: 24, y: 22  }, { x: 36, y: 22  },  // neutral zone bottom
+            { x: 10, y:  8  }, { x: 50, y:  8  },  // end zone top
+            { x: 10, y: 22  }, { x: 50, y: 22  },  // end zone bottom
+        ];
+    }
+    // NHL 200×85 ft — cx/cy from circle elements in index.html
+    return [
+        { x: 100, y: 42.5 },               // center ice
+        { x:  80, y: 20.5 }, { x: 120, y: 20.5 },  // neutral zone top
+        { x:  80, y: 64.5 }, { x: 120, y: 64.5 },  // neutral zone bottom
+        { x:  31, y: 20.5 }, { x: 169, y: 20.5 },  // end zone top
+        { x:  31, y: 64.5 }, { x: 169, y: 64.5 },  // end zone bottom
+    ];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// Inline polygon point generator (same algorithm as dot.js)
 function polygonPoints(cx, cy, r, sides) {
     const step = (2 * Math.PI) / sides;
     return Array.from({ length: sides }, (_, i) => {
@@ -27,17 +43,27 @@ function polygonPoints(cx, cy, r, sides) {
     }).join(" ");
 }
 
-// Clone the live rink SVG, strip interactive layers, rename clipPath IDs
-// so they don't conflict with the original in the same document.
+function normalise(coords, period, W) {
+    const [rawX, rawY] = coords;
+    return [period === "2" ? W - rawX : rawX, rawY];
+}
+
+function nearestDot(nx, ny, dots) {
+    return dots.reduce((best, dot) => {
+        const d = Math.hypot(nx - dot.x, ny - dot.y);
+        return d < best.dist ? { dot, dist: d } : best;
+    }, { dot: null, dist: Infinity }).dot;
+}
+
+// Clone live rink SVG, strip interactive layers, rename clipPath IDs
 function cloneRinkSVG() {
-    // The sport SVG id is e.g. "ice-hockey-svg" or "ice-hockey-iihf-svg"
     const original = document.querySelector("#playing-area svg");
     if (!original) return null;
 
     const clone = original.cloneNode(true);
     clone.id = "summary-rink-svg";
 
-    // Rename every clipPath id and its url() references to avoid doc-level conflicts
+    // Rename every clipPath id so it doesn't conflict with the original
     clone.querySelectorAll("clipPath[id]").forEach(cp => {
         const oldId = cp.id;
         const newId = "s-" + oldId;
@@ -47,25 +73,99 @@ function cloneRinkSVG() {
         });
     });
 
-    // Remove dynamic / interactive groups added by JS at runtime
-    [
-        "dots", "heat-map", "player-events",
-        "rink-label-left", "rink-label-right",
-    ].forEach(id => {
-        const el = clone.querySelector("#" + id);
-        if (el) el.remove();
-    });
+    // Strip JS-added dynamic layers
+    ["dots", "heat-map", "player-events", "rink-label-left", "rink-label-right"]
+        .forEach(id => { const el = clone.querySelector("#" + id); if (el) el.remove(); });
 
-    // Add a fresh group for our summary dots, before #outside-perimeter
+    // Add a fresh group for summary dots, before the perimeter
     const transformations = clone.querySelector("#transformations");
     const perimeter = clone.querySelector("#outside-perimeter");
     if (transformations) {
-        const dotsGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        dotsGroup.id = "summary-dots";
-        transformations.insertBefore(dotsGroup, perimeter || null);
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.id = "summary-dots";
+        transformations.insertBefore(g, perimeter || null);
     }
-
     return clone;
+}
+
+// ─── Faceoff analytics ────────────────────────────────────────────────────────
+
+function aggregateFaceoffs(rows, W) {
+    const dots = getFaceoffDots(W);
+    const stats = new Map(dots.map(d => [d, { w: 0, l: 0 }]));
+
+    rows.forEach(row => {
+        if (!row.specialData?.isStatRow || !row.specialData.coords) return;
+        const type = row.rowData["shot-type"] || "";
+        const isWin  = type.includes("FO Win");
+        const isLoss = type.includes("FO Loss");
+        if (!isWin && !isLoss) return;
+
+        const [nx, ny] = normalise(row.specialData.coords, row.rowData["period"], W);
+        const dot = nearestDot(nx, ny, dots);
+        if (!dot) return;
+        if (isWin) stats.get(dot).w++;
+        else        stats.get(dot).l++;
+    });
+
+    return { dots, stats };
+}
+
+function renderFaceoffAnalytics(dotsG, rows, W, H) {
+    const { dots, stats } = aggregateFaceoffs(rows, W);
+    const fontSize = H * 0.055;
+    const lineGap  = fontSize * 1.35;
+    const padX     = fontSize * 2.4;
+    const padY     = fontSize * 0.35;
+
+    dots.forEach(dot => {
+        const { w, l } = stats.get(dot);
+        if (w + l === 0) return;
+
+        const total = w + l;
+        const pct   = Math.round((w / total) * 100);
+        const line1 = `${w}W  ${l}L`;
+        const line2 = `${pct}%`;
+        const pctColor = pct >= 50 ? "#2dc653" : "#e63946";
+
+        // Badge anchored at dot center, two lines
+        const bx = dot.x - padX;
+        const by = dot.y - padY;
+        const bw = padX * 2;
+        const bh = lineGap + fontSize + padY * 2;
+
+        dotsG.append("rect")
+            .attr("x", bx).attr("y", by)
+            .attr("width", bw).attr("height", bh)
+            .attr("fill", "white").attr("fill-opacity", 0.82)
+            .attr("rx", fontSize * 0.25);
+
+        dotsG.append("text")
+            .attr("x", dot.x).attr("y", dot.y + fontSize * 0.7)
+            .attr("text-anchor", "middle")
+            .attr("font-size", fontSize * 0.82)
+            .attr("font-family", "Open Sans, sans-serif")
+            .attr("font-weight", "600")
+            .attr("fill", "#333")
+            .text(line1);
+
+        dotsG.append("text")
+            .attr("x", dot.x).attr("y", dot.y + lineGap + fontSize * 0.7)
+            .attr("text-anchor", "middle")
+            .attr("font-size", fontSize)
+            .attr("font-family", "Open Sans, sans-serif")
+            .attr("font-weight", "700")
+            .attr("fill", pctColor)
+            .text(line2);
+    });
+}
+
+// ─── Public entry point ───────────────────────────────────────────────────────
+
+export function setUpSummary() {
+    const btn = document.getElementById("summary-tab");
+    if (!btn) return;
+    btn.addEventListener("shown.bs.tab", () => renderSummary());
 }
 
 // ─── Main render ──────────────────────────────────────────────────────────────
@@ -75,31 +175,34 @@ function renderSummary() {
     container.selectAll("*").remove();
 
     const W = parseFloat(cfgSportA.width);
+    const H = parseFloat(cfgSportA.height);
 
-    // ── period filter ──
+    // ── Period filter ──
     const filterBar = container.append("div").attr("class", "summary-filter-bar");
-    for (const p of ["All", "1", "2", "3", "OT"]) {
+    ["All", "1", "2", "3", "OT"].forEach(p => {
         const label = p === "All" ? "All" : p === "OT" ? "OT" : `P${p}`;
         filterBar.append("button")
             .attr("class", "summary-period-btn grey-btn" +
                 (activePeriod === p ? " summary-period-active" : ""))
             .text(label)
             .on("click", () => { activePeriod = p; renderSummary(); });
-    }
+    });
 
-    // ── event type toggles ──
-    const typeBar = container.append("div").attr("class", "summary-type-bar");
+    // ── Event type toggles ──
     const TYPES = [
         { key: "shots",     label: "Shots",     color: cfgAppearance.blueTeamSolid },
         { key: "hits",      label: "Hits",       color: "#e63946" },
         { key: "turnovers", label: "Turnovers",  color: "#8338ec" },
+        { key: "faceoffs",  label: "Faceoffs",   color: "#0033A0" },
     ];
+
+    const typeBar = container.append("div").attr("class", "summary-type-bar");
     TYPES.forEach(({ key, label, color }) => {
-        const active = activeTypes.has(key);
+        const on = activeTypes.has(key);
         typeBar.append("button")
-            .attr("class", "summary-type-btn grey-btn" + (active ? " summary-type-active" : ""))
-            .style("border-color", active ? color : null)
-            .style("color",        active ? color : null)
+            .attr("class", "summary-type-btn grey-btn" + (on ? " summary-type-active" : ""))
+            .style("border-color", on ? color : null)
+            .style("color",        on ? color : null)
             .text(label)
             .on("click", () => {
                 activeTypes.has(key) ? activeTypes.delete(key) : activeTypes.add(key);
@@ -107,73 +210,60 @@ function renderSummary() {
             });
     });
 
-    // ── collect + normalise rows ──
-    const allRows = getRows() || [];
+    // ── Collect + filter rows ──
+    const allRows = (getRows() || []).filter(r =>
+        activePeriod === "All" || r.rowData["period"] === activePeriod
+    );
 
-    function normaliseCoords(coords, period) {
-        const [rawX, rawY] = coords;
-        return [period === "2" ? W - rawX : rawX, rawY];
-    }
-
+    // ── Normalise shot/hit/turnover events ──
     const dots = [];
-
     allRows.forEach(row => {
-        const period = row.rowData["period"];
-        if (activePeriod !== "All" && period !== activePeriod) return;
         if (!row.specialData.coords) return;
-
-        const [nx, ny] = normaliseCoords(row.specialData.coords, period);
+        const [nx, ny] = normalise(row.specialData.coords, row.rowData["period"], W);
         const type = row.rowData["shot-type"] || "";
 
         if (!row.specialData.isStatRow && activeTypes.has("shots")) {
             dots.push({ nx, ny, kind: "shot", teamColor: row.specialData.teamColor || "greyTeam" });
         } else if (row.specialData.isStatRow) {
-            if (activeTypes.has("hits") && type.includes("Hits")) {
-                dots.push({ nx, ny, kind: "hit" });
-            } else if (activeTypes.has("turnovers") && type.includes("Turnovers")) {
-                dots.push({ nx, ny, kind: "turnover" });
-            }
+            if (activeTypes.has("hits")      && type.includes("Hits"))      dots.push({ nx, ny, kind: "hit" });
+            if (activeTypes.has("turnovers") && type.includes("Turnovers")) dots.push({ nx, ny, kind: "turnover" });
         }
     });
 
-    // ── counts ──
-    const shotDots      = dots.filter(d => d.kind === "shot");
-    const shotsOffensive = shotDots.filter(d => d.nx > W / 2).length;
-    const shotsDefensive = shotDots.filter(d => d.nx <= W / 2).length;
+    // ── Shot counts ──
+    const shotDots = dots.filter(d => d.kind === "shot");
+    const nOffensive = shotDots.filter(d => d.nx > W / 2).length;
+    const nDefensive = shotDots.filter(d => d.nx <= W / 2).length;
 
     container.append("div").attr("class", "summary-counts center")
-        .html(`<span class="summary-defensive">Defensive Zone: <strong>${shotsDefensive}</strong></span>` +
+        .html(`<span class="summary-defensive">Defensive Zone: <strong>${nDefensive}</strong></span>` +
               `<span class="summary-sep">|</span>` +
-              `<span class="summary-offensive">Offensive Zone: <strong>${shotsOffensive}</strong></span>`);
+              `<span class="summary-offensive">Offensive Zone: <strong>${nOffensive}</strong></span>`);
 
-    // ── clone rink SVG ──
+    // ── Clone rink SVG ──
     const svgNode = cloneRinkSVG();
     if (!svgNode) {
-        container.append("p").text("Rink not available — switch to Inputs tab first.");
+        container.append("p").attr("class", "center").text("Rink not available — open the Inputs tab first.");
         return;
     }
     document.getElementById("summary-container").appendChild(svgNode);
+    const dotsG = d3.select("#summary-dots");
 
-    // ── zone labels (inside #summary-dots, in rink-space units) ──
-    const H        = parseFloat(cfgSportA.height);
-    const fontSize = H * 0.09;
-    const dotsG    = d3.select("#summary-dots");
+    // ── Zone labels ──
+    const labelFontSize = H * 0.09;
+    [
+        { x: W * 0.25, text: "Defensive Zone", fill: cfgAppearance.orangeTeamSolid },
+        { x: W * 0.75, text: "Offensive Zone",  fill: cfgAppearance.blueTeamSolid  },
+    ].forEach(({ x, text, fill }) => {
+        dotsG.append("text")
+            .attr("x", x).attr("y", H * 0.13)
+            .attr("text-anchor", "middle").attr("font-size", labelFontSize)
+            .attr("font-family", "Open Sans, sans-serif").attr("font-weight", "600")
+            .attr("fill", fill).attr("pointer-events", "none")
+            .text(text);
+    });
 
-    dotsG.append("text")
-        .attr("x", W * 0.25).attr("y", H * 0.13)
-        .attr("text-anchor", "middle").attr("font-size", fontSize)
-        .attr("font-family", "Open Sans, sans-serif").attr("font-weight", "600")
-        .attr("fill", cfgAppearance.orangeTeamSolid).attr("pointer-events", "none")
-        .text("Defensive Zone");
-
-    dotsG.append("text")
-        .attr("x", W * 0.75).attr("y", H * 0.13)
-        .attr("text-anchor", "middle").attr("font-size", fontSize)
-        .attr("font-family", "Open Sans, sans-serif").attr("font-weight", "600")
-        .attr("fill", cfgAppearance.blueTeamSolid).attr("pointer-events", "none")
-        .text("Offensive Zone");
-
-    // ── render dots ──
+    // ── Shot / hit / turnover dots ──
     const circleR = parseFloat(cfgSportA.circleR);
     const polyR   = parseFloat(cfgSportA.polyR || cfgSportA.circleR);
 
@@ -196,4 +286,9 @@ function renderSummary() {
                 .attr("stroke", "white").attr("stroke-width", 0.05);
         }
     });
+
+    // ── Faceoff analytics overlay ──
+    if (activeTypes.has("faceoffs")) {
+        renderFaceoffAnalytics(dotsG, allRows, W, H);
+    }
 }
