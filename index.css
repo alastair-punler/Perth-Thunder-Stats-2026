@@ -587,24 +587,25 @@ input[type="text"].roster-input-name { width: auto; flex: 1 1 auto; }
 #main-tabs { margin-top: 0.5rem; margin-bottom: 0; }
 .tab-content { padding-top: 1rem; }
 
-.summary-filter-bar {
-  display: flex; gap: 0.4rem; justify-content: center; margin-bottom: 0.75rem; }
+.summary-filter-bar, .summary-type-bar {
+  display: flex; gap: 0.4rem; justify-content: center; margin-bottom: 0.5rem; }
 
-.summary-period-btn {
+.summary-period-btn, .summary-type-btn {
   padding: 0.2rem 0.7rem; font-size: 0.85rem;
   border: 1px solid #aaaaaa; border-radius: 0.2rem; cursor: pointer; }
 
 .summary-period-active {
   background-color: #0033A0; color: white; border-color: #0033A0; }
-
 .summary-period-active:hover { background-color: #002080; }
+
+.summary-type-btn { font-weight: 500; }
 
 .summary-counts {
   font-size: 0.95rem; font-weight: 400; gap: 1.5rem; margin-bottom: 0.5rem; }
 
-.summary-sep    { color: #aaaaaa; }
-.summary-for    { color: rgba(53, 171, 169, 1); }
-.summary-against { color: rgba(234, 142, 72, 1); }
+.summary-sep        { color: #aaaaaa; }
+.summary-offensive  { color: rgba(53, 171, 169, 1); }
+.summary-defensive  { color: rgba(234, 142, 72, 1); }
 
 #summary-rink-svg { display: block; margin: 0 auto; }
 #summary-container svg { cursor: default; }
