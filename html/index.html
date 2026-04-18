@@ -106,6 +106,22 @@
         </div>
         <hr />
 
+        <ul class="nav nav-tabs" id="main-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="inputs-tab"
+                    data-bs-toggle="tab" data-bs-target="#inputs-tab-pane"
+                    type="button" role="tab" aria-selected="true">Inputs</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="summary-tab"
+                    data-bs-toggle="tab" data-bs-target="#summary-tab-pane"
+                    type="button" role="tab" aria-selected="false">Summary</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="main-tab-content">
+        <div class="tab-pane fade show active" id="inputs-tab-pane" role="tabpanel">
+
         <div class="main">
             <div id="details" class="shot-info"></div>
             <div class="center">
@@ -426,6 +442,15 @@
         <div id="roster-panel"></div>
         <table id="shot-table" class="table shot-table"></table>
         <div id="csv-upload-download"></div>
+
+        </div><!-- /inputs-tab-pane -->
+
+        <div class="tab-pane fade" id="summary-tab-pane" role="tabpanel">
+            <div id="summary-container"></div>
+        </div>
+
+        </div><!-- /tab-content -->
+
         <div id="details-modal"></div>
         <div id="delete-all-modal"></div>
         <hr />
