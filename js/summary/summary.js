@@ -219,14 +219,15 @@ function renderSummary() {
     const dots = [];
     allRows.forEach(row => {
         if (!row.specialData.coords) return;
-        const [nx, ny] = normalise(row.specialData.coords, row.rowData["period"], W);
+        const period = row.rowData["period"] || "1";
+        const [nx, ny] = normalise(row.specialData.coords, period, W);
         const type = row.rowData["shot-type"] || "";
 
         if (!row.specialData.isStatRow && activeTypes.has("shots")) {
-            dots.push({ nx, ny, kind: "shot", teamColor: row.specialData.teamColor || "greyTeam" });
+            dots.push({ nx, ny, period, kind: "shot", teamColor: row.specialData.teamColor || "greyTeam" });
         } else if (row.specialData.isStatRow) {
-            if (activeTypes.has("hits")      && type.includes("Hits"))      dots.push({ nx, ny, kind: "hit" });
-            if (activeTypes.has("turnovers") && type.includes("Turnovers")) dots.push({ nx, ny, kind: "turnover" });
+            if (activeTypes.has("hits")      && type.includes("Hits"))      dots.push({ nx, ny, period, kind: "hit" });
+            if (activeTypes.has("turnovers") && type.includes("Turnovers")) dots.push({ nx, ny, period, kind: "turnover" });
         }
     });
 
@@ -264,8 +265,9 @@ function renderSummary() {
     });
 
     // ── Shot / hit / turnover dots ──
-    const circleR = parseFloat(cfgSportA.circleR);
-    const polyR   = parseFloat(cfgSportA.polyR || cfgSportA.circleR);
+    const circleR   = parseFloat(cfgSportA.circleR);
+    const polyR     = parseFloat(cfgSportA.polyR || cfgSportA.circleR);
+    const labelSize = circleR * 0.9;  // period label font size in rink units
 
     dots.forEach(d => {
         if (d.kind === "shot") {
@@ -285,6 +287,20 @@ function renderSummary() {
                 .attr("fill", "#8338ec").attr("fill-opacity", 0.9)
                 .attr("stroke", "white").attr("stroke-width", 0.05);
         }
+
+        // Period label above each dot so it's clear which period placed it here
+        const pLabel = d.period === "OT" ? "OT" : `P${d.period}`;
+        dotsG.append("text")
+            .attr("x", d.nx)
+            .attr("y", d.ny - polyR - labelSize * 0.25)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "auto")
+            .attr("font-size", labelSize)
+            .attr("font-family", "Open Sans, sans-serif")
+            .attr("font-weight", "600")
+            .attr("fill", "#444")
+            .attr("pointer-events", "none")
+            .text(pLabel);
     });
 
     // ── Faceoff analytics overlay ──
