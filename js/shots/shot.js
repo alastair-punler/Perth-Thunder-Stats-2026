@@ -82,7 +82,10 @@ function setUpRinkLabels() {
     updateRinkLabels();
 
     d3.select("#details").on("change.rinkLabels", (e) => {
-        if (e.target.name === "period") updateRinkLabels();
+        if (e.target.name === "period") {
+            updateRinkLabels();
+            updatePeriodDotVisibility();
+        }
     });
     d3.select("#details").on("input.rinkLabels", (e) => {
         if (e.target.id === "blue-team-name" || e.target.id === "orange-team-name")
@@ -153,6 +156,7 @@ function setUpShots() {
         _.map(getRows(), (r) => {
             createShotFromData(r.id, r.rowData, r.specialData, false);
         });
+        updatePeriodDotVisibility();
     }
 
     setUpRinkLabels();
@@ -326,19 +330,41 @@ function createShotFromData(id, rowData, specialData, newRow = true) {
         updateTableFooter();
     }
     if (filterRows([formattedRow]).length == 1) {
-        if (!specialData.isStatRow) createDot("#normal", id, specialData, "visible");
+        if (!specialData.isStatRow) {
+            createDot("#normal", id, specialData, "visible");
+            applyPeriodClass(id, rowData["period"]);
+        }
         if (newRow) {
             addFilteredRow(formattedRow);
             createNewRow(id, rowData, specialData);
         }
         heatMap();
     } else {
-        if (!specialData.isStatRow) createDot("#normal", id, specialData, "hidden");
+        if (!specialData.isStatRow) {
+            createDot("#normal", id, specialData, "hidden");
+            applyPeriodClass(id, rowData["period"]);
+        }
         if (addRow) {
             setNumRows(getNumRows() + 1);
             updateTableFooter();
         }
     }
+}
+
+// Hide/show a single dot based on whether its period matches the selected period.
+function applyPeriodClass(id, dotPeriod) {
+    const selected = d3.select('input[name="period"]:checked').property("value");
+    d3.select("#normal").select(`[id='${id}']`).classed("period-hidden", dotPeriod !== selected);
+}
+
+// Re-apply period visibility to all dots — called when period radio changes.
+export function updatePeriodDotVisibility() {
+    const selected = d3.select('input[name="period"]:checked').property("value");
+    (getRows() || []).forEach(row => {
+        if (row.specialData?.isStatRow) return;
+        d3.select("#normal").select(`[id='${row.id}']`)
+            .classed("period-hidden", row.rowData["period"] !== selected);
+    });
 }
 
 export { setUpShots, createShotFromData, updateRinkLabels };

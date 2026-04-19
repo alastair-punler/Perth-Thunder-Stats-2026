@@ -160,6 +160,91 @@ function renderFaceoffAnalytics(dotsG, rows, W, H) {
     });
 }
 
+// ─── Stats tables ─────────────────────────────────────────────────────────────
+
+function renderStatsTables(container, fullRows) {
+    const periods   = ["1", "2", "3", "OT"];
+    const homeName  = d3.select("#blue-team-name").property("value")   || "Home";
+    const awayName  = d3.select("#orange-team-name").property("value") || "Away";
+
+    // Bucket data by period
+    const shots = {}, stats = {};
+    periods.forEach(p => {
+        shots[p] = { home: 0, away: 0 };
+        stats[p] = { hits: 0, turnovers: 0, foWin: 0, foLoss: 0 };
+    });
+
+    fullRows.forEach(row => {
+        const p = row.rowData["period"];
+        if (!periods.includes(p)) return;
+        const type = row.rowData["shot-type"] || "";
+
+        if (!row.specialData?.isStatRow) {
+            if (row.specialData?.teamColor === "blueTeam")   shots[p].home++;
+            else if (row.specialData?.teamColor === "orangeTeam") shots[p].away++;
+        } else {
+            if (type.includes("Hits"))       stats[p].hits++;
+            else if (type.includes("Turnovers")) stats[p].turnovers++;
+            else if (type.includes("FO Win"))    stats[p].foWin++;
+            else if (type.includes("FO Loss"))   stats[p].foLoss++;
+        }
+    });
+
+    const totShots = periods.reduce((a, p) => ({
+        home: a.home + shots[p].home, away: a.away + shots[p].away
+    }), { home: 0, away: 0 });
+
+    const totStats = periods.reduce((a, p) => ({
+        hits: a.hits + stats[p].hits,
+        turnovers: a.turnovers + stats[p].turnovers,
+        foWin: a.foWin + stats[p].foWin,
+        foLoss: a.foLoss + stats[p].foLoss,
+    }), { hits: 0, turnovers: 0, foWin: 0, foLoss: 0 });
+
+    const wrap = container.append("div").attr("class", "summary-tables-row");
+
+    // ── Shots table ──
+    const shotsWrap = wrap.append("div").attr("class", "summary-table-wrap");
+    shotsWrap.append("h6").attr("class", "summary-table-title").text("Shots");
+    const st = shotsWrap.append("table").attr("class", "table summary-stat-table");
+    const sh = st.append("thead").append("tr");
+    ["Period", homeName, awayName, "Total"].forEach(h =>
+        sh.append("th").text(h));
+    const sb = st.append("tbody");
+    periods.forEach(p => {
+        const tr = sb.append("tr");
+        const tot = shots[p].home + shots[p].away;
+        [p === "OT" ? "OT" : `P${p}`, shots[p].home, shots[p].away, tot]
+            .forEach(v => tr.append("td").text(v));
+    });
+    const stot = sb.append("tr").attr("class", "summary-total-row");
+    ["Total", totShots.home, totShots.away, totShots.home + totShots.away]
+        .forEach(v => stot.append("td").text(v));
+
+    // ── Player stats table ──
+    const statsWrap = wrap.append("div").attr("class", "summary-table-wrap");
+    statsWrap.append("h6").attr("class", "summary-table-title").text("Player Stats");
+    const pt = statsWrap.append("table").attr("class", "table summary-stat-table");
+    const ph = pt.append("thead").append("tr");
+    ["Period", "Hits", "Turnovers", "FO Win", "FO Loss", "FO%"].forEach(h =>
+        ph.append("th").text(h));
+    const pb = pt.append("tbody");
+    periods.forEach(p => {
+        const { hits, turnovers, foWin, foLoss } = stats[p];
+        const foTotal = foWin + foLoss;
+        const foPct   = foTotal > 0 ? Math.round((foWin / foTotal) * 100) + "%" : "—";
+        const tr = pb.append("tr");
+        [p === "OT" ? "OT" : `P${p}`, hits, turnovers, foWin, foLoss, foPct]
+            .forEach(v => tr.append("td").text(v));
+    });
+    const ptot = pb.append("tr").attr("class", "summary-total-row");
+    const { hits, turnovers, foWin, foLoss } = totStats;
+    const foTotal = foWin + foLoss;
+    const foPct   = foTotal > 0 ? Math.round((foWin / foTotal) * 100) + "%" : "—";
+    ["Total", hits, turnovers, foWin, foLoss, foPct]
+        .forEach(v => ptot.append("td").text(v));
+}
+
 // ─── Public entry point ───────────────────────────────────────────────────────
 
 export function setUpSummary() {
@@ -176,6 +261,10 @@ function renderSummary() {
 
     const W = parseFloat(cfgSportA.width);
     const H = parseFloat(cfgSportA.height);
+
+    // ── Stats tables (always show all periods, unaffected by period filter) ──
+    const fullRows = getRows() || [];
+    renderStatsTables(container, fullRows);
 
     // ── Period filter ──
     const filterBar = container.append("div").attr("class", "summary-filter-bar");

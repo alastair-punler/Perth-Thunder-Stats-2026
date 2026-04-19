@@ -367,6 +367,8 @@ table .centered-cell {
   vertical-align: middle; }
 
 /* playing area */
+.period-hidden { visibility: hidden !important; }
+
 #playing-area {
   cursor: crosshair; }
   #playing-area #custom-pa-error-message {
@@ -609,6 +611,30 @@ input[type="text"].roster-input-name { width: auto; flex: 1 1 auto; }
 
 #summary-rink-svg { display: block; margin: 0 auto; }
 #summary-container svg { cursor: default; }
+
+.summary-tables-row {
+  display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+
+.summary-table-wrap { flex: 1; min-width: 260px; }
+
+.summary-table-title {
+  font-weight: 700; font-size: 0.9rem; margin-bottom: 0.3rem; }
+
+.summary-stat-table {
+  font-size: 0.82rem; width: 100%; }
+
+.summary-stat-table thead th {
+  background-color: #eaecef; font-weight: 600;
+  padding: 0.3rem 0.5rem; text-align: center;
+  border: 1px solid #aaaaaa; }
+
+.summary-stat-table tbody td {
+  text-align: center; padding: 0.25rem 0.5rem;
+  border: 1px solid #ddd; }
+
+.summary-total-row td {
+  font-weight: 700; background-color: #f2f4f5;
+  border-top: 2px solid #aaaaaa; }
 
 @media (max-width: 768px) {
   .main {
