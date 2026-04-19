@@ -70,6 +70,7 @@ export function setup(s) {
         setUpLegend();
         setUpRoster();
         setUpSummary();
+        setUpResetButton();
 
         d3.select("h1")
             .attr("href", "./")
@@ -119,4 +120,17 @@ export function setup(s) {
             });
         });
     });
+}
+
+function setUpResetButton() {
+    d3.select(".header")
+        .append("button")
+        .attr("class", "reset-all-btn")
+        .attr("title", "Clear all shots, roster stats and settings")
+        .text("Reset All Data")
+        .on("click", () => {
+            if (!confirm("This will permanently clear all shots, roster stats, and settings. Continue?")) return;
+            localStorage.clear();
+            location.reload();
+        });
 }

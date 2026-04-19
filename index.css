@@ -45,6 +45,23 @@
     text-decoration: none; }
 
 /* general  */
+.header { position: relative; }
+
+.reset-all-btn {
+  position: absolute;
+  right: 1rem;
+  top: 0.75rem;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  background: #fff0f0;
+  border: 1px solid #e63946;
+  border-radius: 0.2rem;
+  color: #e63946;
+  cursor: pointer; }
+  .reset-all-btn:hover {
+    background: #e63946;
+    color: white; }
+
 h1 {
   cursor: pointer;
   font-weight: bold; }
