@@ -265,9 +265,8 @@ function renderSummary() {
     });
 
     // ── Shot / hit / turnover dots ──
-    const circleR   = parseFloat(cfgSportA.circleR);
-    const polyR     = parseFloat(cfgSportA.polyR || cfgSportA.circleR);
-    const labelSize = circleR * 0.9;  // period label font size in rink units
+    const circleR = parseFloat(cfgSportA.circleR);
+    const polyR   = parseFloat(cfgSportA.polyR || cfgSportA.circleR);
 
     dots.forEach(d => {
         if (d.kind === "shot") {
@@ -288,19 +287,6 @@ function renderSummary() {
                 .attr("stroke", "white").attr("stroke-width", 0.05);
         }
 
-        // Period label above each dot so it's clear which period placed it here
-        const pLabel = d.period === "OT" ? "OT" : `P${d.period}`;
-        dotsG.append("text")
-            .attr("x", d.nx)
-            .attr("y", d.ny - polyR - labelSize * 0.25)
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "auto")
-            .attr("font-size", labelSize)
-            .attr("font-family", "Open Sans, sans-serif")
-            .attr("font-weight", "600")
-            .attr("fill", "#444")
-            .attr("pointer-events", "none")
-            .text(pLabel);
     });
 
     // ── Faceoff analytics overlay ──
