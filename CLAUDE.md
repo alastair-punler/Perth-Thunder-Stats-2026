@@ -157,6 +157,41 @@ Top-right of header, `position: absolute`. Confirm dialog → `localStorage.clea
 
 ---
 
+## CSV Schema
+
+CSV export/import uses a **fixed canonical schema** that is deliberately decoupled from the visible shot-table columns (so roster stat rows can round-trip without forcing a Player column into the UI).
+
+**Columns (in order, exact casing):**
+```
+Period, Team, Type, Player, X, Y
+```
+
+- **Shot rows**: `Type` is `Shot`|`Goal`, `Player` is blank.
+- **Roster stat rows**: `Type` is `Hits`|`Turnovers`|`FO Win`|`FO Loss`, `Player` is the jersey number (e.g. `25`).
+- `X`/`Y` are game coords (same as `rowData.x`/`y` — origin at rink centre).
+
+**Label ↔ stat-key map** (must match both `STAT_LABEL_BY_KEY` in `js/csv.js` and the `STATS` array in `js/roster/roster.js`):
+| CSV Type | roster statKey |
+|---|---|
+| `Hits` | `hits` |
+| `Turnovers` | `turnovers` |
+| `FO Win` | `faceoffWins` |
+| `FO Loss` | `faceoffLosses` |
+
+**Export** ([js/csv.js `downloadCSV`](js/csv.js)): for stat rows, splits `#NN — Label` into separate `Player` + `Type` cells. For shots, writes `Type` as-is.
+
+**Import** ([js/csv.js `processCSV`](js/csv.js)):
+- Validates the header matches `CSV_HEADER` exactly; otherwise the row is rejected and the upload field is marked invalid.
+- A row is treated as a stat row iff `Player` is non-empty AND `Type` is one of the four stat labels above. All stat rows are forced to `teamColor = "blueTeam"` (home).
+- On each stat row, calls `applyImportedStat(rowId, playerNumber, statKey, svgCoords)` in `roster.js` — this increments the player's stat counter, appends an entry to `playerEvents` storage with `id === rowId`, and draws the ice marker in `#player-events`. The shared id is critical so table-row deletion still calls `cleanupStatEvent` correctly.
+- `buildStatRowData` in `roster.js` is **unchanged**; the display string `#25 — Hits` is only reconstructed at the CSV layer on import.
+
+**Upload lifecycle** ([js/csv.js `uploadCSV`](js/csv.js)): before Papa.parse, calls `clearTable()` **and** `resetRosterForImport()` (zeros all player stat counts, clears `playerEvents`, wipes `#player-events` SVG). After parse `complete`, calls `updateTableFooter()` and `renderRoster()`.
+
+**Breaking change:** Legacy 5-column CSVs (`Period, Team, Type, X, Y`) no longer validate. They must be edited to the new schema by splitting the `#NN — Label` Type cells into separate `Type` + `Player` columns. A hand-converted sample lives at [4.19.2026-15.28.csv](4.19.2026-15.28.csv).
+
+---
+
 ## Deployment
 
 ### Docker

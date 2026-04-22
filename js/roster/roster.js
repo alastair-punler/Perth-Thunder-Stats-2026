@@ -185,6 +185,43 @@ function recordStat(player, statKey, svgCoords) {
     renderRoster();
 }
 
+// Rebuild roster state for a stat row reconstructed from CSV.
+// The eventId must equal the table row id so table-row deletion cleans up the stat.
+function applyImportedStat(eventId, playerNumber, statKey, svgCoords) {
+    const players = getPlayers();
+    const player  = players.find(p => String(p.number) === String(playerNumber));
+
+    if (player) {
+        if (!player.stats) {
+            player.stats = { turnovers: 0, hits: 0, faceoffWins: 0, faceoffLosses: 0 };
+        }
+        player.stats[statKey] = (player.stats[statKey] || 0) + 1;
+        savePlayers(players);
+
+        const ev = { id: eventId, playerId: player.id, stat: statKey, coords: svgCoords };
+        const events = getEvents();
+        events.push(ev);
+        saveEvents(events);
+
+        drawMarker(ev, player);
+    } else {
+        // Unknown jersey — draw the ice marker with a stub so the event isn't lost visually.
+        drawMarker({ id: eventId, stat: statKey, coords: svgCoords }, { number: String(playerNumber) });
+    }
+}
+
+// Zero every player's stat counts and clear events + ice markers.
+// Called before a CSV import so counts don't accumulate.
+function resetRosterForImport() {
+    const players = getPlayers().map(p => ({
+        ...p,
+        stats: { turnovers: 0, hits: 0, faceoffWins: 0, faceoffLosses: 0 },
+    }));
+    savePlayers(players);
+    saveEvents([]);
+    d3.select("#player-events").selectAll("*").remove();
+}
+
 function downloadTemplate() {
     const csv = "number,name\n11,Example Player\n22,Another Player\n";
     download(csv, "roster-template.csv", "text/csv");
@@ -390,6 +427,8 @@ function renderRosterLegend() {
     xOffset -= 2 * spacing;
     svg.attr("width", xOffset).attr("height", 2 * yOffset);
 }
+
+export { applyImportedStat, resetRosterForImport, renderRoster };
 
 export function setUpRoster() {
     d3.select("#transformations").insert("g", "#dots").attr("id", "player-events");
