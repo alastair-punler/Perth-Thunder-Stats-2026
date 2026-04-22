@@ -21,7 +21,8 @@ import { updateTableFooter } from "./table/table.js";
 import { createShotFromData } from "./shots/shot.js";
 import { shotTypeLegend, teamLegend } from "./shots/legend.js";
 import { downloadArea, uploadArea } from "./components/upload-download.js";
-import { cfgSportA } from "../setup.js";
+import { cfgSportA, sport } from "../setup.js";
+import { deleteGameEvents, saveGame, setCurrentGame, getCurrentGameId } from "./db.js";
 import {
     applyImportedStat,
     resetRosterForImport,
@@ -125,6 +126,25 @@ async function uploadCSV(id, uploadId, e) {
             // remove invalid class if necessary
             d3.select(uploadId).classed("is-invalid", false);
             let swapTeamColor = "blueTeam";
+
+            // Delete old Supabase events and create a new game record for this import.
+            // Fire-and-forget — CSV processing continues regardless of DB availability.
+            deleteGameEvents(getCurrentGameId());
+            const filename = f.name.replace(/\.csv$/i, '');
+            const today = new Date().toISOString().split('T')[0];
+            saveGame({
+                name: filename,
+                date: today,
+                rink: sport,
+                homeName: d3.select("#blue-team-name").property("value") || "Home",
+                awayName: d3.select("#orange-team-name").property("value") || "Away",
+            }).then(newId => {
+                if (newId) {
+                    setCurrentGame(newId);
+                    localStorage.setItem('lastGameId', newId);
+                }
+            });
+
             clearTable();
             resetRosterForImport();
             Papa.parse(f, {
