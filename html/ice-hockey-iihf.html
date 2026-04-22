@@ -19,6 +19,11 @@
             type="text/css"
         />
 
+        <!-- Supabase -->
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+        <!-- App config (env vars injected at container startup) -->
+        <script src="/js/config.js"></script>
+
         <!-- localDataStorage -->
         <script defer
             src="https://cdn.jsdelivr.net/gh/macmcmeans/localDataStorage@master/localDataStorage-3.0.0.min.js"
@@ -112,6 +117,9 @@
                 <button class="nav-link" id="summary-tab"
                     data-bs-toggle="tab" data-bs-target="#summary-tab-pane"
                     type="button" role="tab" aria-selected="false">Summary</button>
+            </li>
+            <li class="nav-item ms-auto d-flex align-items-center pe-1" role="presentation">
+                <a class="btn btn-sm btn-outline-secondary" href="/html/history.html">Season History</a>
             </li>
         </ul>
 
@@ -479,6 +487,41 @@
 
         <div id="details-modal"></div>
         <div id="delete-all-modal"></div>
+
+        <!-- New Game Modal -->
+        <div class="modal fade" id="new-game-modal" tabindex="-1"
+             data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="new-game-modal-label">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="new-game-modal-label">New Game</h5>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="game-opponent" class="form-label">Opponent</label>
+                            <input type="text" class="form-control" id="game-opponent" placeholder="e.g. Brave">
+                        </div>
+                        <div class="mb-3">
+                            <label for="game-date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="game-date">
+                        </div>
+                        <div class="mb-3">
+                            <label for="game-venue" class="form-label">Venue <span class="text-muted">(optional)</span></label>
+                            <input type="text" class="form-control" id="game-venue" placeholder="e.g. Cockburn Ice Arena">
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary" id="continue-game-btn" style="display:none">
+                            Continue last game
+                        </button>
+                        <button type="button" class="btn btn-primary" id="start-game-btn">
+                            Start Game
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <hr />
         <script type="module" src="/setup.js"></script>
         <script type="module">

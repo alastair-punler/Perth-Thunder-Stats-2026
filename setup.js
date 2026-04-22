@@ -11,6 +11,7 @@ import { select2Dropdown } from "./js/details/widgets/widgets-special.js";
 import { cfgOtherSetup } from "./js/details/config-details.js";
 import { customCardSetup } from "./js/custom-setups/card-setup.js";
 import { customConfigSetup } from "./js/custom-setups/config-setup.js";
+import { initDB, isConfigured, setCurrentGame, saveGame } from "./js/db.js";
 
 export let sport;
 export let dataStorage;
@@ -38,7 +39,8 @@ export function setCfgSportGoalCoords(newGoalCoords) {
 export function setup(s) {
     sport = s;
     dataStorage = localDataStorage(sport);
-    d3.json("/supported-sports.json").then((data) => {
+    initDB();
+    d3.json("/supported-sports.json").then(async (data) => {
         let sportData = _.find(data.sports, { id: sport });
         cfgSportCustomSetup = false;
         if (sportData.needsCustomSetup) {
@@ -88,19 +90,6 @@ export function setup(s) {
             });
         }
 
-        // https://www.ionos.com/digitalguide/e-mail/e-mail-security/protecting-your-email-address-how-to-do-it/
-
-        // ROT13 encryption for email
-        function decode(a) {
-            return a.replace(/[a-zA-Z]/g, function (c) {
-                return String.fromCharCode(
-                    (c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13)
-                        ? c
-                        : c - 26
-                );
-            });
-        }
-
         d3.select("#email").on("click", function () {
             const y = "znvygb:naxathlranaxathlra@tznvy.pbz";
             d3.select(this)
@@ -111,14 +100,66 @@ export function setup(s) {
         $(document).ready(function () {
             select2Dropdown();
             $("#shot-type-select").on("change", function (e) {
-                // update legend
                 shotTypeLegend();
-
-                // https://stackoverflow.com/a/54047075
-                // do not delete new options
                 $(this).find("option").removeAttr("data-select2-tag");
             });
         });
+
+        await setUpNewGameModal(s);
+    });
+}
+
+async function setUpNewGameModal(rink) {
+    if (!isConfigured()) return;
+
+    const existingId = sessionStorage.getItem('currentGameId');
+    if (existingId) {
+        setCurrentGame(existingId);
+        return;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('new-game-modal'), {
+        backdrop: 'static',
+        keyboard: false,
+    });
+
+    // Set today's date as default
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('game-date').value = today;
+
+    // Show "Continue last game" button if a previous game exists
+    const lastGameId = localStorage.getItem('lastGameId');
+    if (lastGameId) {
+        const continueBtn = document.getElementById('continue-game-btn');
+        continueBtn.style.display = '';
+        continueBtn.addEventListener('click', () => {
+            setCurrentGame(lastGameId);
+            modal.hide();
+        });
+    }
+
+    modal.show();
+
+    await new Promise(resolve => {
+        document.getElementById('start-game-btn').addEventListener('click', async () => {
+            const opponent = document.getElementById('game-opponent').value.trim();
+            const date     = document.getElementById('game-date').value;
+            const venue    = document.getElementById('game-venue').value.trim();
+            const homeName = d3.select("#blue-team-name").property("value") || "Home";
+            const awayName = d3.select("#orange-team-name").property("value") || "Away";
+            const name     = opponent ? `vs ${opponent}` : 'Game';
+
+            const gameId = await saveGame({ name, date, opponent, venue, rink, homeName, awayName });
+            if (gameId) {
+                setCurrentGame(gameId);
+                localStorage.setItem('lastGameId', gameId);
+            }
+            modal.hide();
+            resolve();
+        });
+
+        // Also resolve if "continue" was clicked (modal hides, promise resolves)
+        document.getElementById('new-game-modal').addEventListener('hidden.bs.modal', resolve, { once: true });
     });
 }
 
@@ -131,6 +172,7 @@ function setUpResetButton() {
         .on("click", () => {
             if (!confirm("This will permanently clear all shots, roster stats, and settings. Continue?")) return;
             localStorage.clear();
+            sessionStorage.clear();
             location.reload();
         });
 }
