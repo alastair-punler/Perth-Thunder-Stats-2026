@@ -43,10 +43,10 @@ function updateRinkLabels() {
     const awayName = d3.select("#orange-team-name").property("value") || "Away";
 
     d3.select("#rink-label-left")
-        .text(homeShootsRight ? awayName : homeName)
+        .text((homeShootsRight ? awayName : homeName) + " Shoots")
         .attr("fill", homeShootsRight ? "#ea8e48" : "#35aba9");
     d3.select("#rink-label-right")
-        .text(homeShootsRight ? homeName : awayName)
+        .text((homeShootsRight ? homeName : awayName) + " Shoots")
         .attr("fill", homeShootsRight ? "#35aba9" : "#ea8e48");
 }
 
