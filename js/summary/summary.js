@@ -321,14 +321,16 @@ function renderSummary() {
     });
 
     // ── Shot counts ──
+    const homeName = d3.select("#blue-team-name").property("value")   || "Home";
+    const awayName = d3.select("#orange-team-name").property("value") || "Away";
     const shotDots = dots.filter(d => d.kind === "shot");
     const nOffensive = shotDots.filter(d => d.nx > W / 2).length;
     const nDefensive = shotDots.filter(d => d.nx <= W / 2).length;
 
     container.append("div").attr("class", "summary-counts center")
-        .html(`<span class="summary-defensive">Defensive Zone: <strong>${nDefensive}</strong></span>` +
+        .html(`<span class="summary-defensive">${awayName} Shots: <strong>${nDefensive}</strong></span>` +
               `<span class="summary-sep">|</span>` +
-              `<span class="summary-offensive">Offensive Zone: <strong>${nOffensive}</strong></span>`);
+              `<span class="summary-offensive">${homeName} Shots: <strong>${nOffensive}</strong></span>`);
 
     // ── Clone rink SVG ──
     const svgNode = cloneRinkSVG();
@@ -342,8 +344,8 @@ function renderSummary() {
     // ── Zone labels ──
     const labelFontSize = H * 0.09;
     [
-        { x: W * 0.25, text: "Defensive Zone", fill: cfgAppearance.orangeTeamSolid },
-        { x: W * 0.75, text: "Offensive Zone",  fill: cfgAppearance.blueTeamSolid  },
+        { x: W * 0.25, text: `${awayName} Shoots`, fill: cfgAppearance.orangeTeamSolid },
+        { x: W * 0.75, text: `${homeName} Shoots`, fill: cfgAppearance.blueTeamSolid  },
     ].forEach(({ x, text, fill }) => {
         dotsG.append("text")
             .attr("x", x).attr("y", H * 0.13)
