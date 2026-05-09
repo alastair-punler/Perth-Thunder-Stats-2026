@@ -319,7 +319,7 @@ function createShotFromEvent(e, point1) {
     createShotFromData(id, rowData, specialData);
 }
 
-function createShotFromData(id, rowData, specialData, newRow = true) {
+function createShotFromData(id, rowData, specialData, newRow = true, saveToDb = true) {
     const formattedRow = {
         id: id,
         rowData: rowData,
@@ -329,7 +329,7 @@ function createShotFromData(id, rowData, specialData, newRow = true) {
     if (newRow) {
         addRow(formattedRow);
         updateTableFooter();
-        saveEvent(formattedRow); // fire-and-forget
+        if (saveToDb) saveEvent(formattedRow); // fire-and-forget
     }
     if (filterRows([formattedRow]).length == 1) {
         if (!specialData.isStatRow) {

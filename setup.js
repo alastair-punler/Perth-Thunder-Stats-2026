@@ -11,7 +11,8 @@ import { select2Dropdown } from "./js/details/widgets/widgets-special.js";
 import { cfgOtherSetup } from "./js/details/config-details.js";
 import { customCardSetup } from "./js/custom-setups/card-setup.js";
 import { customConfigSetup } from "./js/custom-setups/config-setup.js";
-import { initDB, isConfigured, setCurrentGame, saveGame } from "./js/db.js";
+import { initDB, isConfigured, setCurrentGame, saveGame, deleteGameEvents, saveEvent, getCurrentGameId } from "./js/db.js";
+import { getRows } from "./js/table/table-functions.js";
 
 export let sport;
 export let dataStorage;
@@ -109,39 +110,32 @@ export function setup(s) {
     });
 }
 
-async function setUpNewGameModal(rink) {
-    if (!isConfigured()) return;
-
-    const existingId = sessionStorage.getItem('currentGameId');
-    if (existingId) {
-        setCurrentGame(existingId);
-        return;
-    }
-
+async function _showNewGameModal(rink, { bulkSaveExisting = false } = {}) {
     const modal = new bootstrap.Modal(document.getElementById('new-game-modal'), {
         backdrop: 'static',
         keyboard: false,
     });
 
-    // Set today's date as default
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('game-date').value = today;
+    document.getElementById('game-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('game-opponent').value = '';
+    document.getElementById('game-venue').value = '';
 
-    // Show "Continue last game" button if a previous game exists
     const lastGameId = localStorage.getItem('lastGameId');
-    if (lastGameId) {
-        const continueBtn = document.getElementById('continue-game-btn');
+    const continueBtn = document.getElementById('continue-game-btn');
+    if (!bulkSaveExisting && lastGameId) {
         continueBtn.style.display = '';
-        continueBtn.addEventListener('click', () => {
-            setCurrentGame(lastGameId);
-            modal.hide();
-        });
+        continueBtn.onclick = () => { setCurrentGame(lastGameId); modal.hide(); };
+    } else {
+        continueBtn.style.display = 'none';
     }
+
+    const startBtn = document.getElementById('start-game-btn');
+    startBtn.textContent = bulkSaveExisting ? 'Save Game' : 'Start Game';
 
     modal.show();
 
     await new Promise(resolve => {
-        document.getElementById('start-game-btn').addEventListener('click', async () => {
+        startBtn.addEventListener('click', async () => {
             const opponent = document.getElementById('game-opponent').value.trim();
             const date     = document.getElementById('game-date').value;
             const venue    = document.getElementById('game-venue').value.trim();
@@ -149,23 +143,67 @@ async function setUpNewGameModal(rink) {
             const awayName = d3.select("#orange-team-name").property("value") || "Away";
             const name     = opponent ? `vs ${opponent}` : 'Game';
 
+            if (bulkSaveExisting) deleteGameEvents(getCurrentGameId());
+
             const gameId = await saveGame({ name, date, opponent, venue, rink, homeName, awayName });
             if (gameId) {
                 setCurrentGame(gameId);
                 localStorage.setItem('lastGameId', gameId);
+                if (bulkSaveExisting) {
+                    for (const row of (getRows() || [])) saveEvent(row);
+                }
             }
             modal.hide();
             resolve();
-        });
-
-        // Also resolve if "continue" was clicked (modal hides, promise resolves)
+        }, { once: true });
         document.getElementById('new-game-modal').addEventListener('hidden.bs.modal', resolve, { once: true });
     });
 }
 
+async function setUpNewGameModal(rink) {
+    if (!isConfigured()) return;
+
+    // Don't interrupt an active session — if rows exist, silently reconnect and continue
+    const existingRows = dataStorage.get('rows') || [];
+    if (existingRows.length > 0) {
+        const lastGameId = localStorage.getItem('lastGameId');
+        if (lastGameId) setCurrentGame(lastGameId);
+        return;
+    }
+
+    const existingId = sessionStorage.getItem('currentGameId');
+    if (existingId) {
+        setCurrentGame(existingId);
+        return;
+    }
+
+    await _showNewGameModal(rink);
+}
+
+export async function showSaveGameModal(rink) {
+    if (!isConfigured()) return;
+    await _showNewGameModal(rink, { bulkSaveExisting: true });
+}
+
 function setUpResetButton() {
-    d3.select(".header")
-        .append("button")
+    const btnGroup = d3.select(".header")
+        .append("div")
+        .attr("class", "header-btn-group");
+
+    if (isConfigured()) {
+        btnGroup.append("button")
+            .attr("class", "new-game-btn")
+            .attr("title", "Clear current data and start a new game")
+            .text("New Game")
+            .on("click", () => {
+                if (!confirm("Start a new game? This will clear the current shot data.")) return;
+                localStorage.clear();
+                sessionStorage.clear();
+                location.reload();
+            });
+    }
+
+    btnGroup.append("button")
         .attr("class", "reset-all-btn")
         .attr("title", "Clear all shots, roster stats and settings")
         .text("Reset All Data")

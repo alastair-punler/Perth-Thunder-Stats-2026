@@ -21,8 +21,8 @@ import { updateTableFooter } from "./table/table.js";
 import { createShotFromData } from "./shots/shot.js";
 import { shotTypeLegend, teamLegend } from "./shots/legend.js";
 import { downloadArea, uploadArea } from "./components/upload-download.js";
-import { cfgSportA, sport } from "../setup.js";
-import { deleteGameEvents, saveGame, setCurrentGame, getCurrentGameId } from "./db.js";
+import { cfgSportA, sport, showSaveGameModal } from "../setup.js";
+import { isConfigured } from "./db.js";
 import {
     applyImportedStat,
     resetRosterForImport,
@@ -114,36 +114,31 @@ function escape(text) {
     return text.includes(",") ? '"' + text + '"' : text;
 }
 
+function _showSaveToDatabaseButton(containerId) {
+    if (!isConfigured()) return;
+    d3.select('#csv-save-to-db-btn').remove();
+    d3.select(containerId)
+        .append("button")
+        .attr("id", "csv-save-to-db-btn")
+        .attr("class", "csv-save-db-btn")
+        .text("Save Game to Database")
+        .on("click", async function () {
+            this.disabled = true;
+            this.textContent = "Saving…";
+            await showSaveGameModal(sport);
+            d3.select('#csv-save-to-db-btn').remove();
+        });
+}
+
 async function uploadCSV(id, uploadId, e) {
     if (/.csv$/i.exec(d3.select(uploadId).property("value"))) {
         const f = e.target.files[0];
         if (f) {
-            // change text and wipe value to allow for same file upload
-            // while preserving name
             d3.select(id).select(".upload-name-text").text(f.name);
             d3.select(id).select(".upload").property("value", "");
-
-            // remove invalid class if necessary
             d3.select(uploadId).classed("is-invalid", false);
+            d3.select('#csv-save-to-db-btn').remove();
             let swapTeamColor = "blueTeam";
-
-            // Delete old Supabase events and create a new game record for this import.
-            // Fire-and-forget — CSV processing continues regardless of DB availability.
-            deleteGameEvents(getCurrentGameId());
-            const filename = f.name.replace(/\.csv$/i, '');
-            const today = new Date().toISOString().split('T')[0];
-            saveGame({
-                name: filename,
-                date: today,
-                rink: sport,
-                homeName: d3.select("#blue-team-name").property("value") || "Home",
-                awayName: d3.select("#orange-team-name").property("value") || "Away",
-            }).then(newId => {
-                if (newId) {
-                    setCurrentGame(newId);
-                    localStorage.setItem('lastGameId', newId);
-                }
-            });
 
             clearTable();
             resetRosterForImport();
@@ -151,15 +146,12 @@ async function uploadCSV(id, uploadId, e) {
                 header: true,
                 skipEmptyLines: true,
                 step: function (row) {
-                    swapTeamColor = processCSV(
-                        uploadId,
-                        row.data,
-                        swapTeamColor
-                    );
+                    swapTeamColor = processCSV(uploadId, row.data, swapTeamColor);
                 },
                 complete: function () {
                     updateTableFooter();
                     renderRoster();
+                    _showSaveToDatabaseButton(id);
                 },
             });
         }
@@ -275,7 +267,7 @@ function processCSV(uploadId, row, swapTeamColor) {
         applyImportedStat(id, playerNumber, STAT_KEY_BY_LABEL[typeLabel], svgCoords);
     }
 
-    createShotFromData(id, rowData, specialData);
+    createShotFromData(id, rowData, specialData, true, false); // skip DB — user saves via button
     return newSwapTeam;
 }
 
