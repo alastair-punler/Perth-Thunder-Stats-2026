@@ -17,10 +17,13 @@ const DEFAULT_PLAYERS = [
     { number: "8",  name: "David Kudla" },
     { number: "11", name: "Yu Hikosaka" },
     { number: "12", name: "Kieren Webster" },
-    { number: "13", name: "Max Lyashenko" },
+    { number: "13", name: "Maxim Lyashenko" },
     { number: "15", name: "Lynden Lodge" },
     { number: "16", name: "Yannic Lodge" },
+    { number: "17", name: "Brayden Maybee" },
+    { number: "18", name: "Jani Kluuskeri" },
     { number: "19", name: "Ville Tenosalmi" },
+    { number: "22", name: "Henri Auvinen" },
     { number: "23", name: "Jordan Kyros" },
     { number: "25", name: "Alastair Punler" },
     { number: "27", name: "James Woodman" },
@@ -28,9 +31,9 @@ const DEFAULT_PLAYERS = [
     { number: "32", name: "Jakob Ruck" },
     { number: "36", name: "Benjamin Breault" },
     { number: "71", name: "Peter Hrehorcak" },
-    { number: "81", name: "Kolby Johnson" },
     { number: "89", name: "Riley Langille" },
     { number: "93", name: "Felix Plouffe" },
+    { number: "98", name: "Finlay Gordon" },
 ];
 
 const STATS = [
