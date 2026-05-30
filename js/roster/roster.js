@@ -126,7 +126,7 @@ function drawMarker(event, player) {
 function buildStatRowData(player, statKey, svgCoords) {
     const columns  = getHeaderRow();
     const label    = STATS.find(s => s.key === statKey).label;
-    const homeName = d3.select("#blue-team-name").property("value") || "Home";
+    const homeName = d3.select("#blue-team-name").property("value") || "PER";
     const period   = d3.select('input[name="period"]:checked').empty()
         ? "1" : d3.select('input[name="period"]:checked').property("value");
 
@@ -321,7 +321,7 @@ function renderRoster() {
     const hRow  = table.append("thead").append("tr");
 
     hRow.append("th").attr("class", "roster-col-num").text("#");
-    hRow.append("th").text("Name");
+    hRow.append("th").attr("class", "roster-col-name").text("Name");
 
     STATS.forEach(stat => {
         const isActive = selStatKey === stat.key;
@@ -351,7 +351,7 @@ function renderRoster() {
 
         row.append("td").text(player.number)
             .on("click", () => selectPlayer(player));
-        row.append("td").text(player.name)
+        row.append("td").attr("class", "roster-col-name").text(player.name)
             .on("click", () => selectPlayer(player));
 
         STATS.forEach(stat => {

@@ -164,7 +164,7 @@ function renderFaceoffAnalytics(dotsG, rows, W, H) {
 
 function renderStatsTables(container, fullRows) {
     const periods   = ["1", "2", "3", "OT"];
-    const homeName  = d3.select("#blue-team-name").property("value")   || "Home";
+    const homeName  = d3.select("#blue-team-name").property("value")   || "PER";
     const awayName  = d3.select("#orange-team-name").property("value") || "Away";
 
     // Bucket data by period
@@ -321,7 +321,7 @@ function renderSummary() {
     });
 
     // ── Shot counts ──
-    const homeName = d3.select("#blue-team-name").property("value")   || "Home";
+    const homeName = d3.select("#blue-team-name").property("value")   || "PER";
     const awayName = d3.select("#orange-team-name").property("value") || "Away";
     const shotDots = dots.filter(d => d.kind === "shot");
     const nOffensive = shotDots.filter(d => d.nx > W / 2).length;

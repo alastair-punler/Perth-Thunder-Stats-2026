@@ -47,6 +47,11 @@
 /* general  */
 .header { position: relative; }
 
+.header-logo {
+  height: 56px;
+  width: auto;
+  margin-right: 0.75rem; }
+
 .reset-all-btn {
   position: absolute;
   right: 1rem;
@@ -114,10 +119,60 @@ ul {
 
 /* shot info */
 .shot-info {
-  width: 30%;
-  padding: 1rem;
+  width: 25%;
+  padding: 0.6rem 0.75rem;
   margin-bottom: 1rem;
   flex-grow: 1; }
+
+/* pill-style radio buttons */
+.detail-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+  justify-content: center; }
+
+.detail-radio-btn {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  border: 2px solid #adb5bd;
+  background-color: #f8f9fa;
+  color: #495057;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  line-height: 1.2; }
+
+.detail-radio-btn:hover {
+  background-color: #e9ecef;
+  border-color: #6c757d; }
+
+.btn-check:checked + .detail-radio-btn {
+  background-color: #0033A0;
+  border-color: #0033A0;
+  color: white; }
+
+.btn-check:checked + .detail-team-away {
+  background-color: #C8102E;
+  border-color: #C8102E;
+  color: white; }
+
+.team-name-inputs {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+  justify-content: center; }
+
+.team-name-input {
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 300;
+  border: 1px solid #aaaaaa;
+  border-radius: 0.25rem;
+  padding: 0.2rem 0.4rem;
+  width: 50%;
+  min-width: 0; }
 
 select {
   width: 100%; }
@@ -574,9 +629,15 @@ input[type="text"].roster-input-name { width: auto; flex: 1 1 auto; }
   background-color: #dce8ff !important;
   font-weight: 600; }
 
-.roster-col-num  { width: 4rem; }
+.roster-col-num  { width: 2.5rem; }
+.roster-col-name {
+  width: 6rem;
+  max-width: 6rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; }
 .roster-col-stat {
-  width: 5rem;
+  width: 6.5rem;
   text-align: center;
   position: relative; }
 .roster-col-del  { width: 2rem; }

@@ -39,7 +39,7 @@ function updateRinkLabels() {
         ? "1"
         : d3.select('input[name="period"]:checked').property("value");
     const homeShootsRight = period !== "2";
-    const homeName = d3.select("#blue-team-name").property("value") || "Home";
+    const homeName = d3.select("#blue-team-name").property("value") || "PER";
     const awayName = d3.select("#orange-team-name").property("value") || "Away";
 
     d3.select("#rink-label-left")
@@ -125,12 +125,9 @@ function setUpShots() {
             if (shiftHeld && firstPoint === null) {
                 // create ghost dot for first point
                 dataStorage.set("firstPoint", d3.pointer(e));
-                const type = d3.select("#shot-type").empty()
+                const type = d3.select('input[name="shot-type"]:checked').empty()
                     ? null
-                    : d3
-                          .select("#shot-type")
-                          .select("select")
-                          .property("value");
+                    : d3.select('input[name="shot-type"]:checked').property("value");
                 createDot("#ghost", "ghost-dot", {
                     id: "ghost-dot",
                     typeIndex: getTypeIndex(type),
@@ -194,12 +191,14 @@ function createShotFromEvent(e, point1) {
                     .select("input")
                     .property("value");
                 break;
-            case "shot-type":
+            case "shot-type": {
                 const type = d3
-                    .select("#" + col.id)
-                    .select("select")
+                    .select(`input[name="${col.id}"]:checked`)
                     .property("value");
                 specialData["typeIndex"] = getTypeIndex(type);
+                rowData[col.id] = type;
+                break;
+            }
             case "dropdown":
                 rowData[col.id] = d3
                     .select("#" + col.id)
