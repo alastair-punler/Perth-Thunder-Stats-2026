@@ -1,61 +1,7 @@
-import { cfgAppearance } from "../config-appearance.js";
 import { cfgSportA } from "../../setup.js";
 import { getRows } from "../table/table-functions.js";
+import { renderSummaryFromData, prepareRinkSVG } from "./summary-render.js";
 
-// ─── Module state ─────────────────────────────────────────────────────────────
-
-let activePeriod = "All";
-const activeTypes = new Set(["shots"]);
-
-// ─── Faceoff dot positions ────────────────────────────────────────────────────
-// Positions in rink-space units, keyed by rink width.
-// These match the SVG element positions in the embedded rink HTML.
-
-function getFaceoffDots(W) {
-    if (W <= 61) {
-        // IIHF 60×30 m — from transform="translate(x,y)" attributes in ice-hockey-iihf.html
-        return [
-            { x: 30, y: 15  },              // center ice
-            { x: 24, y:  8  }, { x: 36, y:  8  },  // neutral zone top
-            { x: 24, y: 22  }, { x: 36, y: 22  },  // neutral zone bottom
-            { x: 10, y:  8  }, { x: 50, y:  8  },  // end zone top
-            { x: 10, y: 22  }, { x: 50, y: 22  },  // end zone bottom
-        ];
-    }
-    // NHL 200×85 ft — cx/cy from circle elements in index.html
-    return [
-        { x: 100, y: 42.5 },               // center ice
-        { x:  80, y: 20.5 }, { x: 120, y: 20.5 },  // neutral zone top
-        { x:  80, y: 64.5 }, { x: 120, y: 64.5 },  // neutral zone bottom
-        { x:  31, y: 20.5 }, { x: 169, y: 20.5 },  // end zone top
-        { x:  31, y: 64.5 }, { x: 169, y: 64.5 },  // end zone bottom
-    ];
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function polygonPoints(cx, cy, r, sides) {
-    const step = (2 * Math.PI) / sides;
-    return Array.from({ length: sides }, (_, i) => {
-        const x = (cx + r * Math.cos(step * i + 100)).toFixed(3);
-        const y = (cy + r * Math.sin(step * i + 100)).toFixed(3);
-        return `${x},${y}`;
-    }).join(" ");
-}
-
-function normalise(coords, period, W) {
-    const [rawX, rawY] = coords;
-    return [period === "2" ? W - rawX : rawX, rawY];
-}
-
-function nearestDot(nx, ny, dots) {
-    return dots.reduce((best, dot) => {
-        const d = Math.hypot(nx - dot.x, ny - dot.y);
-        return d < best.dist ? { dot, dist: d } : best;
-    }, { dot: null, dist: Infinity }).dot;
-}
-
-// Clone live rink SVG, strip interactive layers, rename clipPath IDs
 function cloneRinkSVG() {
     const original = document.querySelector("#playing-area svg");
     if (!original) return null;
@@ -244,8 +190,6 @@ function renderStatsTables(container, fullRows) {
     ["Total", hits, turnovers, foWin, foLoss, foPct]
         .forEach(v => ptot.append("td").text(v));
 }
-
-// ─── Public entry point ───────────────────────────────────────────────────────
 
 export function setUpSummary() {
     const btn = document.getElementById("summary-tab");
