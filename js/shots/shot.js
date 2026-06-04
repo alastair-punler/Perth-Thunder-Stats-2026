@@ -20,7 +20,6 @@ import {
     perimeterId,
 } from "../../setup.js";
 import { getRosterSelection, triggerRecord } from "../roster/roster-state.js";
-import { saveEvent } from "../db.js";
 
 function autoSelectTeam(svgX) {
     if (d3.select('input[name="team-bool"]').empty()) return;
@@ -328,7 +327,6 @@ function createShotFromData(id, rowData, specialData, newRow = true) {
     if (newRow) {
         addRow(formattedRow);
         updateTableFooter();
-        saveEvent(formattedRow); // fire-and-forget
     }
     if (filterRows([formattedRow]).length == 1) {
         if (!specialData.isStatRow) {
