@@ -21,7 +21,6 @@ import { dotSizeHandler } from "../shots/dot.js";
 import { cfgAppearance } from "../config-appearance.js";
 import { cfgSportA } from "../../setup.js";
 import { triggerDeleteStat } from "../roster/roster-state.js";
-import { deleteEvent } from "../db.js";
 
 function createNewRow(id, rowData, specialData) {
     const numRows = getNumRows() + 1;
@@ -160,7 +159,6 @@ function deleteHandler(id) {
     if (deletedRow?.specialData?.isStatRow) {
         triggerDeleteStat(id);
     }
-    deleteEvent(id); // fire-and-forget
 
     const rows = _.differenceBy(getRows(), [{ id: id }], "id").map(function (
         x,
