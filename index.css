@@ -52,19 +52,34 @@
   width: auto;
   margin-right: 0.75rem; }
 
-.reset-all-btn {
+.header-actions {
   position: absolute;
   right: 1rem;
   top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center; }
+
+.reset-all-btn, .save-to-db-btn {
   font-size: 0.75rem;
   padding: 0.25rem 0.6rem;
+  border-radius: 0.2rem;
+  cursor: pointer; }
+
+.reset-all-btn {
   background: #fff0f0;
   border: 1px solid #e63946;
-  border-radius: 0.2rem;
-  color: #e63946;
-  cursor: pointer; }
+  color: #e63946; }
   .reset-all-btn:hover {
     background: #e63946;
+    color: white; }
+
+.save-to-db-btn {
+  background: #f0fff4;
+  border: 1px solid #2dc653;
+  color: #1a8c39; }
+  .save-to-db-btn:hover {
+    background: #2dc653;
     color: white; }
 
 h1 {

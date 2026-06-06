@@ -75,6 +75,10 @@ typings/
 .env
 .env.test
 
+# Generated config — contains Supabase keys, must not be committed
+# Created by generate-config.ps1 (local dev) or entrypoint.sh (Docker)
+js/config.js
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 

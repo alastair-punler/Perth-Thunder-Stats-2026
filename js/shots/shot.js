@@ -350,19 +350,24 @@ function createShotFromData(id, rowData, specialData, newRow = true) {
     }
 }
 
-// Hide/show a single dot based on whether its period matches the selected period.
+// Hide/show a single dot or player-event marker based on period.
 function applyPeriodClass(id, dotPeriod) {
     const selected = d3.select('input[name="period"]:checked').property("value");
-    d3.select("#normal").select(`[id='${id}']`).classed("period-hidden", dotPeriod !== selected);
+    const hidden = dotPeriod !== selected;
+    d3.select("#normal").select(`[id='${id}']`).classed("period-hidden", hidden);
+    d3.select(`#pe-${id}`).classed("period-hidden", hidden);
 }
 
-// Re-apply period visibility to all dots — called when period radio changes.
+// Re-apply period visibility to all dots and player-event markers.
 export function updatePeriodDotVisibility() {
     const selected = d3.select('input[name="period"]:checked').property("value");
     (getRows() || []).forEach(row => {
-        if (row.specialData?.isStatRow) return;
-        d3.select("#normal").select(`[id='${row.id}']`)
-            .classed("period-hidden", row.rowData["period"] !== selected);
+        const hidden = row.rowData["period"] !== selected;
+        if (row.specialData?.isStatRow) {
+            d3.select(`#pe-${row.id}`).classed("period-hidden", hidden);
+        } else {
+            d3.select("#normal").select(`[id='${row.id}']`).classed("period-hidden", hidden);
+        }
     });
 }
 
