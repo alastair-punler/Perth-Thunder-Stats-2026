@@ -729,6 +729,22 @@ input[type="text"].roster-input-name { width: auto; flex: 1 1 auto; }
   font-weight: 700; background-color: #f2f4f5;
   border-top: 2px solid #aaaaaa; }
 
+.summary-leaderboard-section { margin-top: 1.5rem; }
+
+.summary-leaderboard-table { width: 100%; }
+
+.summary-leaderboard-hdr {
+  user-select: none; white-space: nowrap; }
+
+.summary-leaderboard-hdr:hover { background-color: #dde0e4 !important; }
+
+.summary-leaderboard-hdr-active {
+  background-color: #0033A0 !important; color: white !important; }
+
+.summary-leaderboard-col-active { background-color: #eef2ff; }
+
+.sort-indicator { font-size: 0.75em; margin-left: 2px; }
+
 @media (max-width: 768px) {
   .main {
     display: block; }

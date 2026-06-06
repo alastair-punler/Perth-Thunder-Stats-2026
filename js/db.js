@@ -135,3 +135,39 @@ export async function loadGameEvents(gameId) {
         return data || [];
     } catch (e) { return []; }
 }
+
+export async function saveRosterSnapshot(gameId, players) {
+    if (!_client || !gameId || !players?.length) return;
+    const records = players.map(p => ({
+        game_id:       gameId,
+        player_number: String(p.number),
+        player_name:   p.name || null,
+        app_token:     token(),
+    }));
+    try {
+        await _client.from("game_players").insert(records);
+    } catch (e) { console.warn("db.saveRosterSnapshot:", e); }
+}
+
+export async function loadAllGamePlayers() {
+    if (!_client) return [];
+    try {
+        const { data, error } = await _client
+            .from("game_players")
+            .select("game_id, player_number, player_name");
+        if (error) { console.warn("db.loadAllGamePlayers:", error.message); return []; }
+        return data || [];
+    } catch (e) { return []; }
+}
+
+export async function loadAllStatEvents() {
+    if (!_client) return [];
+    try {
+        const { data, error } = await _client
+            .from("events")
+            .select("game_id, player, type")
+            .eq("is_stat_row", true);
+        if (error) { console.warn("db.loadAllStatEvents:", error.message); return []; }
+        return data || [];
+    } catch (e) { return []; }
+}

@@ -11,9 +11,11 @@ import { select2Dropdown } from "./js/details/widgets/widgets-special.js";
 import { cfgOtherSetup } from "./js/details/config-details.js";
 import { customCardSetup } from "./js/custom-setups/card-setup.js";
 import { customConfigSetup } from "./js/custom-setups/config-setup.js";
-import { initDB, isConfigured, saveGame, bulkSaveEvents, setCurrentGame } from "./js/db.js";
+import { initDB, isConfigured, saveGame, bulkSaveEvents, setCurrentGame, saveRosterSnapshot } from "./js/db.js";
 import { setUpGamesTab } from "./js/games-tab.js";
+import { setUpSeasonStats } from "./js/season-stats.js";
 import { getRows } from "./js/table/table-functions.js";
+import { getPlayers } from "./js/roster/roster.js";
 
 export let sport;
 export let dataStorage;
@@ -76,6 +78,7 @@ export function setup(s) {
         initDB();
         setUpHeaderButtons();
         setUpGamesTab();
+        setUpSeasonStats();
 
         const pendingTab = sessionStorage.getItem("pendingTab");
         if (pendingTab) {
@@ -202,6 +205,7 @@ function showSaveGameModal() {
         if (id) {
             setCurrentGame(id);
             await bulkSaveEvents(id, getRows());
+            await saveRosterSnapshot(id, getPlayers());
         }
 
         modal.hide();

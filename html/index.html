@@ -124,6 +124,11 @@
                     data-bs-toggle="tab" data-bs-target="#games-tab-pane"
                     type="button" role="tab" aria-selected="false">Games Database</button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="season-stats-tab-btn"
+                    data-bs-toggle="tab" data-bs-target="#season-stats-tab-pane"
+                    type="button" role="tab" aria-selected="false">Season Stats</button>
+            </li>
         </ul>
 
         <div class="tab-content" id="main-tab-content">
@@ -459,6 +464,12 @@
         <div class="tab-pane fade" id="games-tab-pane" role="tabpanel">
             <div id="games-list-container" style="padding: 1.25rem;">
                 <p class="text-muted">Select the Games tab to load game history.</p>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="season-stats-tab-pane" role="tabpanel">
+            <div id="season-stats-container">
+                <p class="text-muted" style="padding:1.25rem">Select the Season Stats tab to load aggregate data.</p>
             </div>
         </div>
 
