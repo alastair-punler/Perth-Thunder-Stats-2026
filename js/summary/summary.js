@@ -1,11 +1,14 @@
 import { cfgAppearance } from "../config-appearance.js";
 import { cfgSportA } from "../../setup.js";
 import { getRows } from "../table/table-functions.js";
+import { getPlayers } from "../roster/roster.js";
 
 // ─── Module state ─────────────────────────────────────────────────────────────
 
 let activePeriod = "All";
 const activeTypes = new Set(["shots"]);
+let sortColumn = null;
+let sortDir = "desc";
 
 // ─── Faceoff dot positions ────────────────────────────────────────────────────
 // Positions in rink-space units, keyed by rink width.
@@ -245,6 +248,103 @@ function renderStatsTables(container, fullRows) {
         .forEach(v => ptot.append("td").text(v));
 }
 
+// ─── Per-player leaderboard ───────────────────────────────────────────────────
+
+const LEADERBOARD_COLS = [
+    { key: "number",    label: "#",         getValue: r => parseInt(r.number, 10) || 0,  isNumeric: true  },
+    { key: "name",      label: "Name",      getValue: r => r.name,                        isNumeric: false },
+    { key: "hits",      label: "Hits",      getValue: r => r.hits,                        isNumeric: true  },
+    { key: "turnovers", label: "Turnovers", getValue: r => r.turnovers,                   isNumeric: true  },
+    { key: "foWins",    label: "FO Win",    getValue: r => r.foWins,                      isNumeric: true  },
+    { key: "foLosses",  label: "FO Loss",   getValue: r => r.foLosses,                    isNumeric: true  },
+    { key: "foTotal",   label: "FO Total",  getValue: r => r.foWins + r.foLosses,         isNumeric: true  },
+    { key: "foPct",     label: "FO%",       getValue: r => {
+        const t = r.foWins + r.foLosses;
+        return t > 0 ? r.foWins / t * 100 : -1;
+    }, isNumeric: true },
+];
+
+function computePlayerStats(rows, players) {
+    const statMap = new Map();
+    players.forEach(p => {
+        statMap.set(p.number, { number: p.number, name: p.name, hits: 0, turnovers: 0, foWins: 0, foLosses: 0 });
+    });
+    rows.forEach(row => {
+        if (!row.specialData?.isStatRow) return;
+        const playerNum = row.specialData?.player;
+        if (!playerNum || !statMap.has(playerNum)) return;
+        const type = row.rowData["shot-type"] || "";
+        const s = statMap.get(playerNum);
+        if      (type.includes("Hits"))       s.hits++;
+        else if (type.includes("Turnovers"))  s.turnovers++;
+        else if (type.includes("FO Win"))     s.foWins++;
+        else if (type.includes("FO Loss"))    s.foLosses++;
+    });
+    return [...statMap.values()];
+}
+
+function renderPlayerLeaderboard(container, filteredRows) {
+    const players = getPlayers();
+    if (!players.length) return;
+
+    const stats = computePlayerStats(filteredRows, players);
+
+    let sorted = [...stats];
+    if (sortColumn) {
+        const col = LEADERBOARD_COLS.find(c => c.key === sortColumn);
+        if (col) {
+            sorted.sort((a, b) => {
+                const va = col.getValue(a);
+                const vb = col.getValue(b);
+                if (col.isNumeric) return sortDir === "desc" ? vb - va : va - vb;
+                return sortDir === "desc" ? vb.localeCompare(va) : va.localeCompare(vb);
+            });
+        }
+    }
+
+    const section = container.append("div").attr("class", "summary-leaderboard-section");
+    section.append("h6").attr("class", "summary-table-title").text("Player Leaderboard");
+
+    const table = section.append("table").attr("class", "table summary-stat-table summary-leaderboard-table");
+    const hRow  = table.append("thead").append("tr");
+
+    LEADERBOARD_COLS.forEach(col => {
+        const isActive  = sortColumn === col.key;
+        const indicator = isActive ? (sortDir === "desc" ? " ▼" : " ▲") : "";
+        hRow.append("th")
+            .attr("class", "summary-leaderboard-hdr" + (isActive ? " summary-leaderboard-hdr-active" : ""))
+            .style("cursor", "pointer")
+            .html(col.label + (indicator ? `<span class="sort-indicator">${indicator}</span>` : ""))
+            .on("click", () => {
+                if (sortColumn === col.key) {
+                    sortDir = sortDir === "desc" ? "asc" : "desc";
+                } else {
+                    sortColumn = col.key;
+                    sortDir = "desc";
+                }
+                renderSummary();
+            });
+    });
+
+    const tbody = table.append("tbody");
+    sorted.forEach(player => {
+        const foTotal = player.foWins + player.foLosses;
+        const foPct   = foTotal > 0 ? Math.round((player.foWins / foTotal) * 100) + "%" : "—";
+        const values  = [
+            player.number, player.name,
+            player.hits, player.turnovers,
+            player.foWins, player.foLosses,
+            foTotal, foPct,
+        ];
+        const tr = tbody.append("tr");
+        values.forEach((v, i) => {
+            tr.append("td")
+                .attr("class", sortColumn === LEADERBOARD_COLS[i].key ? "summary-leaderboard-col-active" : "")
+                .text(v);
+        });
+    });
+}
+
 // ─── Public entry point ───────────────────────────────────────────────────────
 
 export function setUpSummary() {
@@ -384,4 +484,7 @@ function renderSummary() {
     if (activeTypes.has("faceoffs")) {
         renderFaceoffAnalytics(dotsG, allRows, W, H);
     }
+
+    // ── Player leaderboard (period-filtered, sortable) ──
+    renderPlayerLeaderboard(container, allRows);
 }

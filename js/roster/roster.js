@@ -431,7 +431,7 @@ function renderRosterLegend() {
     svg.attr("width", xOffset).attr("height", 2 * yOffset);
 }
 
-export { applyImportedStat, resetRosterForImport, renderRoster };
+export { applyImportedStat, resetRosterForImport, renderRoster, getPlayers };
 
 export function setUpRoster() {
     d3.select("#transformations").insert("g", "#dots").attr("id", "player-events");
